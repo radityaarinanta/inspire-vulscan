@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspire Security Report - {{ result.target_url }}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="/static/img/logo.jpg">
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
+    <link rel="icon" type="image/png" href="/static/img/logo.png">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/img/logo.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --surface: #111827;
+            --surface-elevated: #1e293b;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --cyan: #00f0ff;
+            --emerald: #10b981;
+            --critical: #ef4444;
+            --high: #f97316;
+            --medium: #f59e0b;
+            --low: #3b82f6;
+            --info: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1050px;
+            margin: 0 auto;
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 35px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .report-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #00f0ff, #3b82f6, #10b981);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo-title h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-title span { color: var(--cyan); }
+
+        .meta-badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .meta-badge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-muted);
+        }
+
+        .meta-badge strong { color: var(--text-main); }
+
+        .grade-badge-large {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 15px 30px;
+        }
+
+        .grade-val {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .grade-A, .grade-A\+ { color: var(--emerald); border-color: rgba(16, 185, 129, 0.4); }
+        .grade-B { color: #38bdf8; }
+        .grade-C { color: var(--medium); }
+        .grade-D, .grade-F { color: var(--critical); border-color: rgba(239, 68, 68, 0.4); }
+
+        .grade-lbl {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--cyan);
+        }
+
+        .stat-text {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+
+        /* Severity Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-CRITICAL { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-HIGH { background: rgba(249, 115, 22, 0.15); color: #fb923c; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .badge-MEDIUM { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-LOW { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-INFO { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+
+        /* Findings List */
+        .finding-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--info);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 18px;
+        }
+
+        .finding-item.sev-critical { border-left-color: var(--critical); }
+        .finding-item.sev-high { border-left-color: var(--high); }
+        .finding-item.sev-medium { border-left-color: var(--medium); }
+        .finding-item.sev-low { border-left-color: var(--low); }
+
+        .finding-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .finding-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .finding-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 14px;
+        }
+
+        .detail-row {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .detail-row strong {
+            color: #cbd5e1;
+            display: inline-block;
+            min-width: 110px;
+        }
+
+        .remediation-box {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 14px;
+            color: #6ee7b7;
+            font-size: 13px;
+        }
+
+        .remediation-box strong { color: #a7f3d0; }
+
+        .evidence-box {
+            background: #030712;
+            border: 1px solid #1f2937;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: #38bdf8;
+            overflow-x: auto;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, #00f0ff, #0284c7);
+            color: #0b0f19;
+            font-weight: 700;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .print-btn { display: none; }
+            .report-header, .section-card, .finding-item {
+                border-color: #ccc;
+                box-shadow: none;
+                background: white !important;
+                color: black !important;
+            }
+            .finding-title, .logo-title h1, .section-title { color: black !important; }
+            .remediation-box { background: #f0fdf4 !important; color: #166534 !important; border-color: #86efac !important; }
+            .evidence-box { background: #f8fafc !important; color: #0f172a !important; border-color: #cbd5e1 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="report-header">
+            <div class="header-top">
+                <div>
+                    <div class="logo-title">
+                        <h1>
+                            <img src="/static/img/logo.jpg" alt="Logo" onerror="if(!this.dataset.retry){this.dataset.retry='1'; this.src='/static/img/logo.png';} else {this.style.display='none';}" style="width:34px;height:34px;min-width:34px;max-width:34px;object-fit:cover;border-radius:6px;margin-right:10px;vertical-align:middle;display:inline-block;">
+                            INSPIRE <span>SECURITY REPORT</span>
+                        </h1>
+                    </div>
+                    <div class="meta-badges">
+                        <div class="meta-badge">Target: <strong>{{ result.target_url }}</strong></div>
+                        <div class="meta-badge">Scan ID: <strong>{{ result.scan_id }}</strong></div>
+                        <div class="meta-badge">Date: <strong>{{ now }}</strong></div>
+                    </div>
+                </div>
+                <div class="grade-badge-large grade-{{ result.summary.security_grade }}">
+                    <div class="grade-val">{{ result.summary.security_grade }}</div>
+                    <div class="grade-lbl">Security Rating</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; text-align: right;">
+                <button onclick="window.print()" class="print-btn">🖨️ Print / Save as PDF</button>
+            </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-num">{{ result.summary.risk_score }} / 100</div>
+                <div class="stat-text">Risk Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">{{ result.summary.total_findings }}</div>
+                <div class="stat-text">Total Findings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color: var(--critical);">{{ result.summary.critical_count }}</div>
+                <div class="stat-text">Critical Vulnerabilities</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" style="color: var(--high);">{{ result.summary.high_count }}</div>
+                <div class="stat-text">High Vulnerabilities</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num">{{ result.summary.duration_seconds }}s</div>
+                <div class="stat-text">Audit Duration</div>
+            </div>
+        </div>
+
+        <!-- Tech Stack -->
+        {% if result.technologies %}
+        <div class="section-card">
+            <div class="section-title">
+                <span>🔍 Detected Technology Stack</span>
+                <span style="font-size: 13px; color: var(--text-muted); font-weight: normal;">{{ result.technologies|length }} components identified</span>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                {% for tech in result.technologies %}
+                <span class="meta-badge" style="background: rgba(0, 240, 255, 0.06); border-color: rgba(0, 240, 255, 0.2); color: var(--cyan);">
+                    <strong>{{ tech.name }}</strong> ({{ tech.category }}{% if tech.version %} v{{ tech.version }}{% endif %})
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Findings List -->
+        <div class="section-card">
+            <div class="section-title">
+                <span>📋 Audit Findings & Actionable Remediation</span>
+                <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">{{ result.vulnerabilities|length }} issues recorded</span>
+            </div>
+
+            {% if not result.vulnerabilities %}
+            <p style="color: var(--emerald); font-size: 15px;">✓ No vulnerabilities identified during this assessment profile.</p>
+            {% else %}
+            {% for vuln in result.vulnerabilities %}
+            <div class="finding-item sev-{{ vuln.severity.value.lower() }}">
+                <div class="finding-head">
+                    <span class="finding-title">#{{ loop.index }}. {{ vuln.name }}</span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="badge badge-{{ vuln.severity.value }}">{{ vuln.severity.value }}</span>
+                        <span class="meta-badge" style="padding: 2px 8px; font-size: 11px;">CVSS {{ vuln.cvss_score }}</span>
+                    </div>
+                </div>
+
+                <div class="finding-meta">
+                    <span>Category: <strong>{{ vuln.category }}</strong></span>
+                    <span>CWE: <strong>{{ vuln.cwe_id or 'N/A' }}</strong></span>
+                    <span>OWASP: <strong>{{ vuln.owasp_category or 'N/A' }}</strong></span>
+                </div>
+
+                <div class="detail-row">
+                    <strong>Description:</strong> {{ vuln.description }}
+                </div>
+                <div class="detail-row">
+                    <strong>Impact:</strong> {{ vuln.impact }}
+                </div>
+
+                <div class="remediation-box">
+                    <strong>🛡️ Recommended Remediation:</strong> {{ vuln.remediation }}
+                </div>
+
+                {% if vuln.evidence %}
+                {% for ev in vuln.evidence %}
+                <div class="evidence-box">
+                    <div><strong>Target URL:</strong> {{ ev.url }}</div>
+                    {% if ev.parameter %}<div><strong>Parameter:</strong> {{ ev.parameter }}</div>{% endif %}
+                    {% if ev.payload %}<div><strong>Payload:</strong> {{ ev.payload }}</div>{% endif %}
+                    {% if ev.response_status %}<div><strong>Status:</strong> HTTP {{ ev.response_status }}</div>{% endif %}
+                    {% if ev.response_snippet %}<div><strong>Proof / Snippet:</strong> {{ ev.response_snippet }}</div>{% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

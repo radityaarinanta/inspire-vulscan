@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspire — Web Vulnerability Scanner & Security Audit Suite</title>
+    <meta name="description" content="Enterprise-grade asynchronous web vulnerability scanner. OWASP Top 10 aligned, real-time telemetry, and executive PDF/HTML reporting.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="/static/img/logo.jpg">
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
+    <link rel="icon" type="image/png" href="/static/img/logo.png">
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <link rel="apple-touch-icon" href="/static/img/logo.jpg">
+
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
+</head>
+<body>
+
+<!-- ===== LEFT SIDEBAR ===== -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo" id="brand-logo-container" style="width: 34px; height: 34px; min-width: 34px; min-height: 34px; max-width: 34px; max-height: 34px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); flex-shrink: 0; padding: 2px;">
+            <img src="/static/img/logo.jpg" alt="Logo" class="brand-logo-img" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 6px; display: block;" onerror="if(!this.dataset.retry){this.dataset.retry='1'; this.src='/static/img/logo.png';} else {this.style.display='none'; this.nextElementSibling.style.display='flex';}">
+            <div class="brand-logo-fallback" style="display:none; width:100%; height:100%; align-items:center; justify-content:center;">
+                <i data-lucide="shield-check"></i>
+            </div>
+        </div>
+        <div class="brand-text">
+            <span class="brand-name">INSPIRE</span>
+            <span class="brand-sub">Security Suite</span>
+        </div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">
+            <i data-lucide="layout-dashboard"></i>
+            <span data-i18n="nav.dashboard">Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-scan" onclick="switchView('scan')">
+            <i data-lucide="crosshair"></i>
+            <span data-i18n="nav.newScan">New Scan</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-reports" onclick="switchView('reports')">
+            <i data-lucide="file-text"></i>
+            <span data-i18n="nav.reports">Reports</span>
+        </a>
+        <a href="#" class="nav-item" id="nav-history" onclick="switchView('history')">
+            <i data-lucide="history"></i>
+            <span data-i18n="nav.history">History</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="#" class="nav-item" id="nav-settings" onclick="switchView('settings')" style="margin-bottom:8px;">
+            <i data-lucide="settings"></i>
+            <span data-i18n="nav.settings">Settings</span>
+        </a>
+        <div class="sidebar-version">
+            <i data-lucide="info" style="width:13px;height:13px;"></i>
+            <span>v1.0.0</span>
+        </div>
+    </div>
+</aside>
+
+<!-- ===== MAIN WRAPPER ===== -->
+<div class="main-wrapper">
+
+    <!-- TOP HEADER -->
+    <header class="top-header">
+        <div class="header-left">
+            <div class="breadcrumb" id="page-breadcrumb">
+                <span class="bc-root">Inspire</span>
+                <i data-lucide="chevron-right" class="bc-sep"></i>
+                <span class="bc-current">Dashboard</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="header-status" id="header-status">
+                <div class="status-dot idle" id="hdr-status-dot"></div>
+                <span id="hdr-status-text">Engine Ready</span>
+            </div>
+            <button class="btn-primary" id="btn-new-scan" onclick="switchView('scan')">
+                <i data-lucide="plus"></i>
+                New Scan
+            </button>
+        </div>
+    </header>
+
+    <!-- ===== CONTENT AREA ===== -->
+    <main class="content-area">
+
+        <!-- =========================================================
+             VIEW: DASHBOARD
+        ========================================================= -->
+        <div class="view" id="view-dashboard">
+
+            <!-- Stat Cards Row -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-card-label">Total Findings</div>
+                    <div class="stat-card-value" id="stat-total">—</div>
+                    <div class="stat-card-sub" id="stat-since">Run a scan to see results</div>
+                </div>
+                <div class="stat-card stat-card--grade">
+                    <div class="stat-card-label">Security Grade</div>
+                    <div class="grade-ring-wrapper">
+                        <svg class="grade-ring" viewBox="0 0 80 80">
+                            <circle class="grade-ring-track" cx="40" cy="40" r="32"/>
+                            <circle class="grade-ring-fill" cx="40" cy="40" r="32" id="grade-ring-fill" stroke-dasharray="0 201"/>
+                        </svg>
+                        <div class="grade-ring-label" id="stat-grade">—</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Risk Score</div>
+                    <div class="arc-wrapper">
+                        <svg class="arc-gauge" viewBox="0 0 100 60">
+                            <path class="arc-track" d="M 10 55 A 40 40 0 0 1 90 55"/>
+                            <path class="arc-fill" id="arc-fill" d="M 10 55 A 40 40 0 0 1 10 55"/>
+                        </svg>
+                        <div class="arc-label" id="stat-risk">—<small>/100</small></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-label">Scan Duration</div>
+                    <div class="stat-card-value" id="stat-duration">—</div>
+                    <div class="stat-card-sub" id="stat-crawled">Pages crawled: —</div>
+                </div>
+            </div>
+
+            <!-- Middle Row: Chart + Terminal -->
+            <div class="mid-grid">
+                <!-- Category Bar Chart -->
+                <div class="card card--chart">
+                    <div class="card-header">
+                        <span class="card-title">Findings by Category</span>
+                        <i data-lucide="bar-chart-2" class="card-icon"></i>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Live Terminal Log -->
+                <div class="card card--terminal">
+                    <div class="card-header">
+                        <span class="card-title">Live Execution Log</span>
+                        <div class="terminal-dots-row">
+                            <div class="tdot tdot-red"></div>
+                            <div class="tdot tdot-yellow"></div>
+                            <div class="tdot tdot-green"></div>
+                        </div>
+                    </div>
+                    <!-- Progress Bar inside terminal card -->
+                    <div class="inline-progress-wrap">
+                        <div class="inline-progress-track">
+                            <div class="inline-progress-fill" id="scan-progress-bar"></div>
+                        </div>
+                        <div class="inline-progress-info">
+                            <span id="progress-action-text">Waiting for scan target...</span>
+                            <span id="progress-pct">0%</span>
+                        </div>
+                    </div>
+                    <div class="terminal-body" id="terminal-logs">
+                        <div class="log-entry log-info">[--:--:--] Inspire Security Engine initialized. All modules loaded.</div>
+                        <div class="log-entry log-info">[--:--:--] Modules ready: SQLi · XSS · Headers · SSL/TLS · Sensitive Files · Open Redirect · Tech Stack.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Severity & Tech Row -->
+            <div class="secondary-grid">
+                <div class="card card--severity">
+                    <div class="card-header">
+                        <span class="card-title">Severity Distribution</span>
+                        <i data-lucide="pie-chart" class="card-icon"></i>
+                    </div>
+                    <div class="severity-donut-wrap">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+                <div class="card card--tech">
+                    <div class="card-header">
+                        <span class="card-title">Detected Technologies</span>
+                        <i data-lucide="cpu" class="card-icon"></i>
+                    </div>
+                    <div class="tech-pills" id="tech-pills">
+                        <div class="empty-tech">No scan data yet.</div>
+                    </div>
+                </div>
+                <div class="card card--export">
+                    <div class="card-header">
+                        <span class="card-title">Export Report</span>
+                        <i data-lucide="download" class="card-icon"></i>
+                    </div>
+                    <div class="export-btns">
+                        <button class="btn-export" id="btn-export-pdf" disabled>
+                            <i data-lucide="file-text"></i>
+                            Executive PDF
+                        </button>
+                        <button class="btn-export btn-export--html" id="btn-export-html" disabled>
+                            <i data-lucide="code-2"></i>
+                            HTML Report
+                        </button>
+                    </div>
+                    <div class="ssl-info-box" id="ssl-info-box" style="display:none;">
+                        <div class="ssl-info-title"><i data-lucide="lock" style="width:13px;height:13px;"></i> SSL/TLS Certificate</div>
+                        <div id="ssl-info-content"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vulnerability Table -->
+            <div class="card card--table">
+                <div class="card-header">
+                    <span class="card-title">
+                        Vulnerability Findings
+                        <span class="findings-badge" id="findings-count-badge">0</span>
+                    </span>
+                    <div class="table-filters" id="table-filters">
+                        <button class="filter-chip active" data-filter="ALL">All</button>
+                        <button class="filter-chip" data-filter="CRITICAL">Critical</button>
+                        <button class="filter-chip" data-filter="HIGH">High</button>
+                        <button class="filter-chip" data-filter="MEDIUM">Medium</button>
+                        <button class="filter-chip" data-filter="LOW">Low</button>
+                        <button class="filter-chip" data-filter="INFO">Info</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="vuln-table" id="vuln-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Severity</th>
+                                <th>Vulnerability Name</th>
+                                <th>CVSS</th>
+                                <th>Category</th>
+                                <th>OWASP</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="vuln-table-body">
+                            <tr class="table-empty-row">
+                                <td colspan="7">
+                                    <div class="table-empty-state">
+                                        <i data-lucide="shield" class="empty-icon"></i>
+                                        <p>No findings yet. Launch a scan to discover vulnerabilities.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             VIEW: NEW SCAN
+        ========================================================= -->
+        <div class="view hidden" id="view-scan">
+            <div class="scan-panel">
+                <div class="scan-panel-header">
+                    <h2 class="scan-panel-title">
+                        <i data-lucide="crosshair"></i>
+                        Configure & Launch Scan
+                    </h2>
+                    <p class="scan-panel-sub">Enter a target URL and select your scan profile. Inspire will audit the target for OWASP Top 10 vulnerabilities, misconfigurations, and security weaknesses.</p>
+                </div>
+
+                <form id="scan-form" class="scan-form">
+                    <div class="form-group">
+                        <label class="form-label">Target URL <span class="form-required">*</span></label>
+                        <div class="form-input-wrap">
+                            <i data-lucide="globe" class="form-input-icon"></i>
+                            <input type="url" id="target-url-input" class="form-input" placeholder="https://example.com or http://testphp.vulnweb.com" required autocomplete="off">
+                        </div>
+                        <div class="form-hint">
+                            Quick test targets:
+                            <button type="button" class="hint-tag" onclick="setTarget('http://testphp.vulnweb.com')">testphp.vulnweb.com</button>
+                            <button type="button" class="hint-tag" onclick="setTarget('https://httpbin.org')">httpbin.org</button>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Scan Profile</label>
+                            <select id="scan-profile" class="form-select">
+                                <option value="quick">⚡ Quick — Headers, SSL, Tech, Sensitive Files</option>
+                                <option value="standard" selected>🔍 Standard — + Crawler, SQLi, XSS, Redirect (depth 1)</option>
+                                <option value="deep">🕵️ Deep — Full crawl, all vectors, aggressive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-disclaimer">
+                        <i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--amber);flex-shrink:0;"></i>
+                        <span>Only scan systems you own or have explicit authorization to test. Unauthorized scanning may be illegal.</span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="switchView('dashboard')">Cancel</button>
+                        <button type="submit" id="btn-start-scan" class="btn-primary btn-primary--lg">
+                            <i data-lucide="play"></i>
+                            <span id="scan-btn-text">Launch Scan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             VIEW: REPORTS (Placeholder)
+        ========================================================= -->
+        <div class="view hidden" id="view-reports">
+            <div class="placeholder-view">
+                <i data-lucide="file-text" class="placeholder-icon"></i>
+                <h3>Reports</h3>
+                <p>Generated PDF and HTML reports will appear here after completing a scan. Use the "Export Report" card on the Dashboard to generate them.</p>
+                <button class="btn-secondary" onclick="switchView('dashboard')">← Back to Dashboard</button>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             VIEW: SETTINGS
+        ========================================================= -->
+        <div class="view hidden" id="view-settings">
+
+            <div class="settings-page">
+                <div class="settings-header">
+                    <h2 class="settings-title">
+                        <i data-lucide="settings"></i>
+                        <span data-i18n="settings.title">Settings</span>
+                    </h2>
+                    <p class="settings-subtitle" data-i18n="settings.subtitle">Customize language, appearance, scanner defaults, and reporting preferences.</p>
+                </div>
+
+                <!-- ── Section 1: Language & Region ── -->
+                <div class="settings-section">
+                    <div class="settings-section-header">
+                        <div class="settings-section-icon"><i data-lucide="globe"></i></div>
+                        <div>
+                            <div class="settings-section-title" data-i18n="settings.lang.title">Language & Region</div>
+                            <div class="settings-section-desc" data-i18n="settings.lang.desc">Choose the interface display language.</div>
+                        </div>
+                    </div>
+                    <div class="settings-body">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.lang.interfaceLang">Interface Language</div>
+                                <div class="settings-row-hint" data-i18n="settings.lang.interfaceLangHint">All UI labels, buttons, and messages will be displayed in this language.</div>
+                            </div>
+                            <div class="lang-picker">
+                                <button class="lang-btn" id="lang-en" onclick="setLanguage('en')">
+                                    <span class="lang-flag">🇬🇧</span> English
+                                </button>
+                                <button class="lang-btn" id="lang-id" onclick="setLanguage('id')">
+                                    <span class="lang-flag">🇮🇩</span> Indonesia
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Section 2: Appearance ── -->
+                <div class="settings-section">
+                    <div class="settings-section-header">
+                        <div class="settings-section-icon"><i data-lucide="palette"></i></div>
+                        <div>
+                            <div class="settings-section-title" data-i18n="settings.appearance.title">Appearance</div>
+                            <div class="settings-section-desc" data-i18n="settings.appearance.desc">Customize the dashboard look and feel.</div>
+                        </div>
+                    </div>
+                    <div class="settings-body">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.appearance.accentColor">Accent Color</div>
+                                <div class="settings-row-hint" data-i18n="settings.appearance.accentColorHint">Changes sidebar highlights, buttons, charts, and interactive elements.</div>
+                            </div>
+                            <div class="accent-picker" id="accent-picker">
+                                <button class="accent-swatch" data-accent="amber"   onclick="setAccent('amber')"   title="Amber"   style="background:#f59e0b;"></button>
+                                <button class="accent-swatch" data-accent="cyan"    onclick="setAccent('cyan')"    title="Cyan"    style="background:#06b6d4;"></button>
+                                <button class="accent-swatch" data-accent="emerald" onclick="setAccent('emerald')" title="Emerald" style="background:#10b981;"></button>
+                                <button class="accent-swatch" data-accent="purple"  onclick="setAccent('purple')"  title="Purple"  style="background:#a855f7;"></button>
+                                <button class="accent-swatch" data-accent="rose"    onclick="setAccent('rose')"    title="Rose"    style="background:#f43f5e;"></button>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.appearance.terminalLines">Terminal Log Max Lines</div>
+                                <div class="settings-row-hint" data-i18n="settings.appearance.terminalLinesHint">Maximum number of log lines shown in the Live Execution Log before auto-clearing older entries.</div>
+                            </div>
+                            <div class="settings-control">
+                                <input type="number" class="settings-input" id="setting-terminal-lines" min="20" max="500" value="100" oninput="saveSetting('terminalLines', this.value)">
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.appearance.compactMode">Compact Mode</div>
+                                <div class="settings-row-hint" data-i18n="settings.appearance.compactModeHint">Reduce spacing and padding for a denser dashboard layout.</div>
+                            </div>
+                            <div class="settings-control">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="setting-compact" onchange="saveSetting('compactMode', this.checked); applyCompactMode(this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Section 3: Scanner Modules ── -->
+                <div class="settings-section">
+                    <div class="settings-section-header">
+                        <div class="settings-section-icon"><i data-lucide="shield"></i></div>
+                        <div>
+                            <div class="settings-section-title" data-i18n="settings.modules.title">Scanner Modules</div>
+                            <div class="settings-section-desc" data-i18n="settings.modules.desc">Enable or disable individual detection modules. Disabled modules will be skipped during all scans.</div>
+                        </div>
+                    </div>
+                    <div class="settings-body">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">SQL Injection (SQLi) Detection</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.sqliHint">Test input fields and URL parameters for database injection vulnerabilities.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-sqli" checked onchange="saveModule('sqli', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">Cross-Site Scripting (XSS) Detection</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.xssHint">Probe parameters and forms for reflected XSS vulnerabilities.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-xss" checked onchange="saveModule('xss', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.modules.headers">Security Headers Audit</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.headersHint">Check for missing or misconfigured HTTP security headers (CSP, HSTS, X-Frame-Options, CORS, Cookies).</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-headers" checked onchange="saveModule('headers', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.modules.sensitiveFiles">Sensitive File Discovery</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.sensitiveFilesHint">Probe for exposed .env, .git, backups, phpinfo, and admin paths.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-sensitive" checked onchange="saveModule('sensitive', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">SSL/TLS Inspector</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.sslHint">Verify SSL certificate validity, expiration, and HTTPS enforcement.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-ssl" checked onchange="saveModule('ssl', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name">Open Redirect Scanner</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.redirectHint">Test redirect parameters for unvalidated external URL redirection.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-redirect" checked onchange="saveModule('redirect', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.modules.techStack">Technology Fingerprinting</div>
+                                <div class="settings-row-hint" data-i18n="settings.modules.techStackHint">Identify web server, CMS, framework, and frontend library stack.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="mod-tech" checked onchange="saveModule('tech', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Section 4: Report Settings ── -->
+                <div class="settings-section">
+                    <div class="settings-section-header">
+                        <div class="settings-section-icon"><i data-lucide="file-text"></i></div>
+                        <div>
+                            <div class="settings-section-title" data-i18n="settings.report.title">Report Settings</div>
+                            <div class="settings-section-desc" data-i18n="settings.report.desc">Configure default report generation behavior.</div>
+                        </div>
+                    </div>
+                    <div class="settings-body">
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.report.defaultFormat">Default Export Format</div>
+                                <div class="settings-row-hint" data-i18n="settings.report.defaultFormatHint">Determines which report format button is highlighted after a scan completes.</div>
+                            </div>
+                            <div class="settings-control">
+                                <select class="settings-select" id="setting-report-format" onchange="saveSetting('reportFormat', this.value)">
+                                    <option value="pdf">PDF Only</option>
+                                    <option value="html">HTML Only</option>
+                                    <option value="both" selected>Both PDF & HTML</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.report.filenamePrefix">Report Filename Prefix</div>
+                                <div class="settings-row-hint" data-i18n="settings.report.filenamePrefixHint">Custom prefix for generated report files (e.g. "MyCompany_Audit").</div>
+                            </div>
+                            <div class="settings-control">
+                                <input type="text" class="settings-input" id="setting-report-prefix" placeholder="Inspire_Audit" maxlength="40" oninput="saveSetting('reportPrefix', this.value)">
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.report.includeInfo">Include INFO Severity in Reports</div>
+                                <div class="settings-row-hint" data-i18n="settings.report.includeInfoHint">When disabled, informational findings (banners, robots.txt, tech disclosure) are excluded from exported reports.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="setting-include-info" checked onchange="saveSetting('includeInfo', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="settings-row">
+                            <div class="settings-row-label">
+                                <div class="settings-row-name" data-i18n="settings.report.autoExport">Auto-Export After Scan</div>
+                                <div class="settings-row-hint" data-i18n="settings.report.autoExportHint">Automatically trigger report download when a scan finishes.</div>
+                            </div>
+                            <label class="toggle-switch"><input type="checkbox" id="setting-auto-export" onchange="saveSetting('autoExport', this.checked)"><span class="toggle-slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save / Reset Row -->
+                <div class="settings-actions">
+                    <button class="btn-secondary" onclick="resetSettings()">
+                        <i data-lucide="rotate-ccw"></i>
+                        <span data-i18n="settings.resetDefaults">Reset to Defaults</span>
+                    </button>
+                    <div class="settings-saved-indicator" id="settings-saved-indicator">
+                        <i data-lucide="check-circle-2" style="width:14px;height:14px;color:var(--emerald);"></i>
+                        <span data-i18n="settings.saved">Settings saved</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+
+            <div class="placeholder-view">
+                <i data-lucide="history" class="placeholder-icon"></i>
+                <h3>Scan History</h3>
+                <p>Past scan results will be listed here in future versions.</p>
+                <button class="btn-secondary" onclick="switchView('dashboard')">← Back to Dashboard</button>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ===== RIGHT DETAIL DRAWER ===== -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<aside class="detail-drawer" id="detail-drawer">
+    <div class="drawer-header">
+        <div class="drawer-title-wrap">
+            <span class="drawer-badge" id="drawer-badge">INFO</span>
+            <span class="drawer-cvss" id="drawer-cvss">CVSS —</span>
+        </div>
+        <button class="drawer-close" onclick="closeDrawer()">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <div class="drawer-body" id="drawer-body">
+        <!-- Populated by JS -->
+    </div>
+</aside>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
