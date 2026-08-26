@@ -7,7 +7,8 @@ import httpx
 
 from .models import (
     ScanConfig, ScanResult, ScanSummary, ScanProgress,
-    Vulnerability, Severity, ScanProfile, SSLInfo, TechItem
+    Vulnerability, Severity, ScanProfile, SSLInfo, TechItem,
+    MalwareScanResult, MalwareScanSummary, CategoryThreatStatus, MalwareThreatCategory
 )
 from .modules.crawler import WebCrawler
 from .modules.headers import SecurityHeadersScanner
@@ -252,5 +253,93 @@ class ScanEngine:
 
         return result
 
+    async def run_malware_scan(self, target_url: str, scan_id: Optional[str] = None) -> MalwareScanResult:
+        scan_id = scan_id or str(uuid.uuid4())[:8]
+        start_time = datetime.utcnow().isoformat()
+        t0 = time.time()
+
+        from .models import MalwareScanResult, MalwareScanSummary, CategoryThreatStatus, MalwareThreatCategory
+        from .modules.malware import WebMalwareScanner
+
+        scanner = WebMalwareScanner(target_url=target_url)
+
+        async with httpx.AsyncClient(verify=False) as client:
+            findings, metrics = await scanner.scan(client)
+
+        duration = round(time.time() - t0, 2)
+        total_threats = len(findings)
+        critical_threats = sum(1 for f in findings if f.severity == Severity.CRITICAL)
+        high_threats = sum(1 for f in findings if f.severity == Severity.HIGH)
+        medium_threats = sum(1 for f in findings if f.severity == Severity.MEDIUM)
+
+        # Compute overall threat score
+        if findings:
+            max_threat_score = max(f.threat_score for f in findings)
+            overall_threat_score = round(min(100.0, max_threat_score + (total_threats - 1) * 2.0), 1)
+        else:
+            overall_threat_score = 0.0
+
+        if overall_threat_score >= 80.0 or critical_threats > 0:
+            verdict = "MALICIOUS THREATS DETECTED"
+            is_clean = False
+        elif overall_threat_score > 0.0:
+            verdict = "SUSPICIOUS ACTIVITY DETECTED"
+            is_clean = False
+        else:
+            verdict = "SITE CLEAN"
+            is_clean = True
+
+        # Category status breakdown
+        category_statuses = []
+        for cat in [
+            MalwareThreatCategory.CRYPTOJACKING,
+            MalwareThreatCategory.CARD_SKIMMER,
+            MalwareThreatCategory.OBFUSCATED_SCRIPT,
+            MalwareThreatCategory.STEALTH_IFRAME,
+            MalwareThreatCategory.EXPOSED_BACKDOOR,
+            MalwareThreatCategory.DEFACEMENT_SPAM
+        ]:
+            cat_findings = [f for f in findings if f.category == cat]
+            is_inf = len(cat_findings) > 0
+            category_statuses.append(CategoryThreatStatus(
+                category=cat,
+                is_infected=is_inf,
+                count=len(cat_findings),
+                details=f"{len(cat_findings)} threat(s) detected" if is_inf else "Clean"
+            ))
+
+        summary = MalwareScanSummary(
+            is_clean=is_clean,
+            verdict=verdict,
+            overall_threat_score=overall_threat_score,
+            total_threats=total_threats,
+            critical_threats=critical_threats,
+            high_threats=high_threats,
+            medium_threats=medium_threats,
+            scripts_analyzed=metrics.get("scripts_analyzed", 0),
+            iframes_analyzed=metrics.get("iframes_analyzed", 0),
+            backdoors_probed=metrics.get("backdoors_probed", 0),
+            duration_seconds=duration
+        )
+
+        malware_result = MalwareScanResult(
+            scan_id=scan_id,
+            target_url=target_url,
+            start_time=start_time,
+            end_time=datetime.utcnow().isoformat(),
+            status="completed",
+            summary=summary,
+            categories=category_statuses,
+            findings=findings
+        )
+
+        if not hasattr(self, "active_malware_scans"):
+            self.active_malware_scans = {}
+        self.active_malware_scans[scan_id] = malware_result
+
+        return malware_result
+
 # Global Engine Singleton
 scanner_engine = ScanEngine()
+scanner_engine.active_malware_scans = {}
+

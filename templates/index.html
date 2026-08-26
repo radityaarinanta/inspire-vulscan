@@ -52,6 +52,10 @@
             <i data-lucide="crosshair"></i>
             <span data-i18n="nav.newScan">New Scan</span>
         </a>
+        <a href="#" class="nav-item" id="nav-malware" onclick="switchView('malware')">
+            <i data-lucide="shield-alert"></i>
+            <span data-i18n="nav.malware">Malware Scanner</span>
+        </a>
         <a href="#" class="nav-item" id="nav-reports" onclick="switchView('reports')">
             <i data-lucide="file-text"></i>
             <span data-i18n="nav.reports">Reports</span>
@@ -297,7 +301,7 @@
                         <label class="form-label">Target URL <span class="form-required">*</span></label>
                         <div class="form-input-wrap">
                             <i data-lucide="globe" class="form-input-icon"></i>
-                            <input type="url" id="target-url-input" class="form-input" placeholder="https://example.com or http://testphp.vulnweb.com" required autocomplete="off">
+                            <input type="text" id="target-url-input" class="form-input" placeholder="example.com or https://example.com" required autocomplete="off" spellcheck="false">
                         </div>
                         <div class="form-hint">
                             Quick test targets:
@@ -306,14 +310,49 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Scan Profile</label>
-                            <select id="scan-profile" class="form-select">
-                                <option value="quick">⚡ Quick — Headers, SSL, Tech, Sensitive Files</option>
-                                <option value="standard" selected>🔍 Standard — + Crawler, SQLi, XSS, Redirect (depth 1)</option>
-                                <option value="deep">🕵️ Deep — Full crawl, all vectors, aggressive</option>
-                            </select>
+                    <div class="form-group">
+                        <label class="form-label">Scan Profile</label>
+                        <input type="hidden" id="scan-profile" value="standard">
+                        
+                        <div class="profile-cards-grid" id="profile-cards-grid">
+                            <!-- Quick Profile -->
+                            <div class="profile-card" data-profile="quick" onclick="selectProfile('quick')">
+                                <div class="profile-card-header">
+                                    <span class="profile-name">Quick</span>
+                                    <span class="profile-badge badge-quick">Fast Recon</span>
+                                </div>
+                                <p class="profile-desc">Passive audit for Security Headers, SSL/TLS, Tech Stack, and exposed dotfiles.</p>
+                                <div class="profile-footer">
+                                    <span class="profile-time">~5-10s</span>
+                                    <span class="profile-scope">Passive</span>
+                                </div>
+                            </div>
+
+                            <!-- Standard Profile (Default / Recommended) -->
+                            <div class="profile-card active" data-profile="standard" onclick="selectProfile('standard')">
+                                <div class="profile-card-header">
+                                    <span class="profile-name">Standard</span>
+                                    <span class="profile-badge badge-recommended">Recommended</span>
+                                </div>
+                                <p class="profile-desc">Active scan with Web Crawler, SQLi, XSS, and Open Redirect injections.</p>
+                                <div class="profile-footer">
+                                    <span class="profile-time">~30-60s</span>
+                                    <span class="profile-scope">Crawler Depth 2</span>
+                                </div>
+                            </div>
+
+                            <!-- Deep Profile -->
+                            <div class="profile-card" data-profile="deep" onclick="selectProfile('deep')">
+                                <div class="profile-card-header">
+                                    <span class="profile-name">Deep</span>
+                                    <span class="profile-badge badge-deep">Intensive</span>
+                                </div>
+                                <p class="profile-desc">Full crawling, extended endpoint mapping, and aggressive security payloads.</p>
+                                <div class="profile-footer">
+                                    <span class="profile-time">~2-3 min</span>
+                                    <span class="profile-scope">Full Crawl</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -330,6 +369,197 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             VIEW: MALWARE & THREAT SCANNER
+        ========================================================= -->
+        <div class="view hidden" id="view-malware">
+            <div class="malware-page">
+                <div class="malware-header">
+                    <h2 class="malware-title">
+                        <i data-lucide="shield-alert"></i>
+                        <span>Web Malware & Threat Scanner</span>
+                    </h2>
+                    <p class="malware-subtitle">Instant client-side and server-side compromise detection. Identifies in-browser cryptominers, card skimmers (Magecart), stealth iframes, malicious scripts, and exposed backdoors to ensure visitor safety.</p>
+                </div>
+
+                <!-- Launch Bar -->
+                <div class="malware-launch-card">
+                    <form id="malware-form" onsubmit="event.preventDefault(); startMalwareScan();">
+                        <div class="malware-input-wrap">
+                            <i data-lucide="globe" class="form-input-icon"></i>
+                            <input type="text" id="malware-url-input" class="form-input" placeholder="example.com or https://example.com" required autocomplete="off" spellcheck="false">
+                            <button type="submit" id="btn-start-malware" class="btn-primary btn-primary--malware">
+                                <i data-lucide="shield-check" id="malware-btn-icon"></i>
+                                <span id="malware-btn-text">Scan for Threats</span>
+                            </button>
+                        </div>
+                        <div class="form-hint" style="margin-top: 10px;">
+                            Quick sample targets:
+                            <button type="button" class="hint-tag" onclick="document.getElementById('malware-url-input').value='http://127.0.0.1:8000/demo/malware-sample'">Local Sandbox (Simulated Threats)</button>
+                            <button type="button" class="hint-tag" onclick="document.getElementById('malware-url-input').value='https://httpbin.org'">httpbin.org (Clean)</button>
+                            <button type="button" class="hint-tag" onclick="document.getElementById('malware-url-input').value='http://testphp.vulnweb.com'">testphp.vulnweb.com</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Live Scan Animation & Progress -->
+                <div id="malware-loading-section" class="malware-loading-card hidden">
+                    <div class="malware-loading-content">
+                        <!-- Radar Pulse Animation -->
+                        <div class="radar-box">
+                            <div class="radar-sweep"></div>
+                            <div class="radar-ring ring-1"></div>
+                            <div class="radar-ring ring-2"></div>
+                            <div class="radar-ring ring-3"></div>
+                            <i data-lucide="shield-alert" class="radar-center-icon"></i>
+                        </div>
+
+                        <!-- Progress Text & Steps -->
+                        <div class="scan-progress-details">
+                            <div class="scan-status-header">
+                                <span class="scan-live-badge">SCAN IN PROGRESS</span>
+                                <span class="scan-pct" id="malware-progress-pct">0%</span>
+                            </div>
+                            <div class="scan-progress-bar-bg">
+                                <div class="scan-progress-bar-fill" id="malware-progress-bar"></div>
+                            </div>
+                            <div class="scan-current-step" id="malware-current-step">Connecting to target server...</div>
+                            
+                            <div class="scan-steps-list">
+                                <div class="scan-step-item" id="mstep-1">
+                                    <i data-lucide="check-circle" class="step-icon"></i>
+                                    <span>Fetching HTML DOM & External Assets</span>
+                                </div>
+                                <div class="scan-step-item" id="mstep-2">
+                                    <i data-lucide="check-circle" class="step-icon"></i>
+                                    <span>Cryptojacking & Web Miner Heuristics</span>
+                                </div>
+                                <div class="scan-step-item" id="mstep-3">
+                                    <i data-lucide="check-circle" class="step-icon"></i>
+                                    <span>Credit Card Skimmer (Magecart) Hook Audit</span>
+                                </div>
+                                <div class="scan-step-item" id="mstep-4">
+                                    <i data-lucide="check-circle" class="step-icon"></i>
+                                    <span>Script Entropy & Obfuscation Analysis</span>
+                                </div>
+                                <div class="scan-step-item" id="mstep-5">
+                                    <i data-lucide="check-circle" class="step-icon"></i>
+                                    <span>Stealth Iframes & Dropper Detection</span>
+                                </div>
+                                <div class="scan-step-item" id="mstep-6">
+                                    <i data-lucide="check-circle" class="step-icon"></i>
+                                    <span>Server Web Shells & Backdoor Probing</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="malware-results-section" class="malware-results hidden">
+                    
+                    <!-- Verdict & Score Banner -->
+                    <div class="malware-verdict-banner" id="malware-verdict-banner">
+                        <div class="verdict-left">
+                            <div class="verdict-badge" id="malware-verdict-badge">SITE CLEAN</div>
+                            <div class="verdict-meta" id="malware-verdict-meta">Target: <strong id="malware-target-disp">—</strong> | Duration: <span id="malware-duration-disp">0s</span> | Analyzed: <span id="malware-scripts-disp">0 scripts</span></div>
+                        </div>
+                        <div class="verdict-right">
+                            <div class="verdict-score-num" id="malware-score-num">0</div>
+                            <div class="verdict-score-label">Threat Score / 100</div>
+                        </div>
+                    </div>
+
+                    <!-- 6 Threat Category Cards Grid -->
+                    <div class="malware-cat-grid">
+                        <div class="threat-cat-card" id="cat-card-Cryptojacking">
+                            <div class="threat-cat-header">
+                                <span class="threat-cat-name">Cryptojacking & Coin Miners</span>
+                                <span class="threat-cat-status status-clean">CLEAN</span>
+                            </div>
+                            <p class="threat-cat-desc">Detects in-browser Monero/WASM cryptocurrency miners hijacking visitor CPU.</p>
+                        </div>
+
+                        <div class="threat-cat-card" id="cat-card-Card Skimmer">
+                            <div class="threat-cat-header">
+                                <span class="threat-cat-name">Card Skimmers & Magecart</span>
+                                <span class="threat-cat-status status-clean">CLEAN</span>
+                            </div>
+                            <p class="threat-cat-desc">Audits form event listeners intercepting payment and password fields.</p>
+                        </div>
+
+                        <div class="threat-cat-card" id="cat-card-Obfuscated Script">
+                            <div class="threat-cat-header">
+                                <span class="threat-cat-name">Obfuscated Payloads</span>
+                                <span class="threat-cat-status status-clean">CLEAN</span>
+                            </div>
+                            <p class="threat-cat-desc">Scans for eval(atob(...)), multi-layer unescape, and packed malicious scripts.</p>
+                        </div>
+
+                        <div class="threat-cat-card" id="cat-card-Stealth Iframe">
+                            <div class="threat-cat-header">
+                                <span class="threat-cat-name">Stealth Iframes & Droppers</span>
+                                <span class="threat-cat-status status-clean">CLEAN</span>
+                            </div>
+                            <p class="threat-cat-desc">Detects hidden 0x0 or invisible iframes executing drive-by downloads.</p>
+                        </div>
+
+                        <div class="threat-cat-card" id="cat-card-Exposed Backdoor">
+                            <div class="threat-cat-header">
+                                <span class="threat-cat-name">Exposed Web Shells</span>
+                                <span class="threat-cat-status status-clean">CLEAN</span>
+                            </div>
+                            <p class="threat-cat-desc">Probes for public backdoor endpoints (wso.php, c99.php, r57.php, etc.).</p>
+                        </div>
+
+                        <div class="threat-cat-card" id="cat-card-Defacement & SEO Spam">
+                            <div class="threat-cat-header">
+                                <span class="threat-cat-name">Defacement & SEO Spam</span>
+                                <span class="threat-cat-status status-clean">CLEAN</span>
+                            </div>
+                            <p class="threat-cat-desc">Identifies fake support scams, blackhat casino redirects, and defacement.</p>
+                        </div>
+                    </div>
+
+                    <!-- Findings Table -->
+                    <div class="malware-findings-card">
+                        <div class="malware-findings-header">
+                            <div class="malware-findings-title">
+                                <i data-lucide="list"></i>
+                                <span>Threat Findings</span>
+                            </div>
+                            <div class="export-actions-wrap" id="malware-export-wrap">
+                                <button type="button" class="btn-export-tag" id="btn-malware-export-html" onclick="downloadMalwareReport('html')">HTML Report</button>
+                                <button type="button" class="btn-export-tag" id="btn-malware-export-json" onclick="downloadMalwareReport('json')">JSON Report</button>
+                                <button type="button" class="btn-export-tag" id="btn-malware-export-csv" onclick="downloadMalwareReport('csv')">CSV Report</button>
+                            </div>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="vuln-table" id="malware-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Threat Name</th>
+                                        <th>Category</th>
+                                        <th>Severity</th>
+                                        <th>Score</th>
+                                        <th>Affected Resource</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="malware-table-body">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center;color:var(--text-muted);padding:24px;">No threats found. Site is clean.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
 
@@ -376,10 +606,10 @@
                             </div>
                             <div class="lang-picker">
                                 <button class="lang-btn" id="lang-en" onclick="setLanguage('en')">
-                                    <span class="lang-flag">🇬🇧</span> English
+                                    English
                                 </button>
                                 <button class="lang-btn" id="lang-id" onclick="setLanguage('id')">
-                                    <span class="lang-flag">🇮🇩</span> Indonesia
+                                    Indonesia
                                 </button>
                             </div>
                         </div>

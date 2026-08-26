@@ -103,3 +103,60 @@ class ScanResult(BaseModel):
     ssl_info: Optional[SSLInfo] = None
     vulnerabilities: List[Vulnerability] = []
     crawled_urls: List[str] = []
+
+# =============================================================================
+# MALWARE & THREAT DETECTION MODELS
+# =============================================================================
+
+class MalwareThreatCategory(str, Enum):
+    CRYPTOJACKING = "Cryptojacking"
+    CARD_SKIMMER = "Card Skimmer"
+    OBFUSCATED_SCRIPT = "Obfuscated Script"
+    STEALTH_IFRAME = "Stealth Iframe"
+    MALICIOUS_REDIRECT = "Malicious Redirect"
+    EXPOSED_BACKDOOR = "Exposed Backdoor"
+    DEFACEMENT_SPAM = "Defacement & SEO Spam"
+
+class MalwareFinding(BaseModel):
+    id: str
+    name: str
+    category: MalwareThreatCategory
+    severity: Severity
+    threat_score: float = 0.0
+    description: str
+    impact: str
+    remediation: str
+    evidence_snippet: Optional[str] = None
+    affected_url: str
+    detection_type: str = "Heuristic Signature"
+    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+class CategoryThreatStatus(BaseModel):
+    category: MalwareThreatCategory
+    is_infected: bool = False
+    count: int = 0
+    details: str = "Clean"
+
+class MalwareScanSummary(BaseModel):
+    is_clean: bool = True
+    verdict: str = "SITE CLEAN"
+    overall_threat_score: float = 0.0
+    total_threats: int = 0
+    critical_threats: int = 0
+    high_threats: int = 0
+    medium_threats: int = 0
+    scripts_analyzed: int = 0
+    iframes_analyzed: int = 0
+    backdoors_probed: int = 0
+    duration_seconds: float = 0.0
+
+class MalwareScanResult(BaseModel):
+    scan_id: str
+    target_url: str
+    start_time: str
+    end_time: Optional[str] = None
+    status: str = "completed"
+    summary: MalwareScanSummary
+    categories: List[CategoryThreatStatus] = []
+    findings: List[MalwareFinding] = []
+

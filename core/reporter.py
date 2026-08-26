@@ -2,8 +2,9 @@ import os
 import io
 import json
 import csv
+import html
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -14,7 +15,7 @@ from reportlab.platypus import (
 )
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from .models import ScanResult, Severity, FindingEvidence
+from .models import ScanResult, Severity, FindingEvidence, MalwareScanResult
 
 class ReportGenerator:
     def __init__(self, template_dir: str = "templates", reports_dir: str = "reports"):
@@ -91,7 +92,7 @@ class ReportGenerator:
                     "fullDescription": {"text": vuln.description},
                     "help": {
                         "text": f"Remediation:\n{vuln.remediation}\n\nImpact:\n{vuln.impact}",
-                        "markdown": f"### 🛡️ Remediation\n{vuln.remediation}\n\n### ⚠️ Impact\n{vuln.impact}"
+                        "markdown": f"### Remediation\n{vuln.remediation}\n\n### Impact\n{vuln.impact}"
                     },
                     "helpUri": vuln.references[0] if vuln.references else "https://owasp.org/www-project-top-ten/",
                     "properties": {
@@ -493,7 +494,7 @@ class ReportGenerator:
                 <p><strong>Description:</strong> {v.description}</p>
                 <p><strong>Impact:</strong> {v.impact}</p>
                 <div class="remediation-box">
-                    <strong>🛡️ Remediation Advice:</strong> {v.remediation}
+                    <strong>Remediation Advice:</strong> {v.remediation}
                 </div>
                 {evidence_html}
             </div>
@@ -580,3 +581,160 @@ class ReportGenerator:
     </div>
 </body>
 </html>"""
+
+    # =========================================================================
+    # MALWARE & THREAT REPORTS
+    # =========================================================================
+
+    def generate_malware_json_report(self, result: MalwareScanResult, filename: Optional[str] = None) -> str:
+        filename = filename or f"inspire_malware_report_{result.scan_id}.json"
+        filepath = os.path.join(self.reports_dir, filename)
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(result.model_dump_json(indent=2))
+        return filepath
+
+    def generate_malware_csv_report(self, result: MalwareScanResult, filename: Optional[str] = None) -> str:
+        filename = filename or f"inspire_malware_report_{result.scan_id}.csv"
+        filepath = os.path.join(self.reports_dir, filename)
+        
+        headers = [
+            "Threat ID",
+            "Threat Name",
+            "Category",
+            "Severity",
+            "Threat Score",
+            "Affected URL",
+            "Description",
+            "Impact",
+            "Remediation",
+            "Evidence"
+        ]
+
+        with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+            for f_item in result.findings:
+                writer.writerow([
+                    f_item.id,
+                    f_item.name,
+                    f_item.category.value if hasattr(f_item.category, "value") else str(f_item.category),
+                    f_item.severity.value if hasattr(f_item.severity, "value") else str(f_item.severity),
+                    f_item.threat_score,
+                    f_item.affected_url,
+                    f_item.description,
+                    f_item.impact,
+                    f_item.remediation,
+                    f_item.evidence_snippet or ""
+                ])
+
+        return filepath
+
+    def generate_malware_html_report(self, result: MalwareScanResult, filename: Optional[str] = None) -> str:
+        filename = filename or f"inspire_malware_report_{result.scan_id}.html"
+        filepath = os.path.join(self.reports_dir, filename)
+        summary = result.summary
+
+        verdict_color = "#10b981" if summary.is_clean else "#ef4444" if summary.overall_threat_score >= 80 else "#f59e0b"
+
+        finding_rows = ""
+        for idx, f in enumerate(result.findings, 1):
+            sev_val = f.severity.value.upper()
+            sev_color = "#ef4444" if sev_val == "CRITICAL" else "#f97316" if sev_val == "HIGH" else "#f59e0b"
+            cat_val = f.category.value if hasattr(f.category, "value") else str(f.category)
+            evidence = f"""<div style="background:#030712;border:1px solid #1f2937;padding:10px;border-radius:6px;font-family:monospace;font-size:12px;color:#38bdf8;margin-top:10px;">{html.escape(f.evidence_snippet or '')}</div>""" if f.evidence_snippet else ""
+
+            finding_rows += f"""
+            <div style="background:#111827;border:1px solid #1f2937;border-left:4px solid {sev_color};border-radius:8px;padding:18px;margin-bottom:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                    <h3 style="color:#fff;font-size:16px;margin:0;">#{idx}. {html.escape(f.name)}</h3>
+                    <div>
+                        <span style="background:rgba(255,255,255,0.08);padding:3px 8px;border-radius:4px;color:{sev_color};font-weight:bold;font-size:11px;">{sev_val}</span>
+                        <span style="background:rgba(0,240,255,0.1);color:#00f0ff;padding:3px 8px;border-radius:4px;font-size:11px;margin-left:6px;">Score {f.threat_score}</span>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px;">
+                    <span>Category: <strong>{html.escape(cat_val)}</strong></span> | <span>Affected: <code>{html.escape(f.affected_url)}</code></span>
+                </div>
+                <p style="color:#d1d5db;font-size:13px;margin-bottom:8px;"><strong>Description:</strong> {html.escape(f.description)}</p>
+                <p style="color:#d1d5db;font-size:13px;margin-bottom:8px;"><strong>Impact:</strong> {html.escape(f.impact)}</p>
+                <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:6px;padding:10px;color:#6ee7b7;font-size:13px;margin-top:10px;">
+                    <strong>Remediation:</strong> {html.escape(f.remediation)}
+                </div>
+                {evidence}
+            </div>
+            """
+
+        cat_cards = ""
+        for cat in result.categories:
+            status_color = "#ef4444" if cat.is_infected else "#10b981"
+            cat_name = cat.category.value if hasattr(cat.category, "value") else str(cat.category)
+            status_text = "THREAT DETECTED" if cat.is_infected else "CLEAN"
+            cat_cards += f"""
+            <div style="background:#111827;border:1px solid #1f2937;border-radius:8px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-weight:600;font-size:13px;color:#f3f4f6;">{cat_name}</span>
+                <span style="font-size:11px;font-weight:bold;color:{status_color};background:rgba(255,255,255,0.05);padding:3px 8px;border-radius:4px;">{status_text}</span>
+            </div>
+            """
+
+        content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Inspire Malware & Threat Report - {result.target_url}</title>
+    <style>
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0b0f19; color: #f3f4f6; padding: 30px 20px; }}
+        .container {{ max-width: 950px; margin: 0 auto; }}
+        .header {{ background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }}
+        .verdict-badge {{ font-size: 16px; font-weight: 800; padding: 8px 16px; border-radius: 8px; color: {verdict_color}; border: 1px solid {verdict_color}; background: rgba(255,255,255,0.04); text-transform: uppercase; }}
+        .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }}
+        .stat-card {{ background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 16px; text-align: center; }}
+        .stat-val {{ font-size: 22px; font-weight: 800; color: #00f0ff; }}
+        .stat-lbl {{ font-size: 11px; text-transform: uppercase; color: #9ca3af; margin-top: 4px; }}
+        .cat-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1 style="margin:0;font-size:22px;color:#fff;">INSPIRE Threat & Malware Audit Report</h1>
+                <p style="color:#9ca3af;font-size:13px;margin:5px 0 0 0;">Target: <strong>{result.target_url}</strong> | Scan ID: {result.scan_id} | Completed: {result.end_time}</p>
+            </div>
+            <div class="verdict-badge">{summary.verdict}</div>
+        </div>
+
+        <div class="grid">
+            <div class="stat-card">
+                <div class="stat-val" style="color: {verdict_color};">{summary.overall_threat_score} / 100</div>
+                <div class="stat-lbl">Overall Threat Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">{summary.total_threats}</div>
+                <div class="stat-lbl">Detected Threats</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">{summary.scripts_analyzed}</div>
+                <div class="stat-lbl">Scripts Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val">{summary.duration_seconds}s</div>
+                <div class="stat-lbl">Scan Duration</div>
+            </div>
+        </div>
+
+        <h2 style="font-size:16px;color:#fff;margin-bottom:12px;">Threat Category Breakdown</h2>
+        <div class="cat-grid">
+            {cat_cards}
+        </div>
+
+        <h2 style="font-size:16px;color:#fff;margin-bottom:12px;">Detailed Findings ({summary.total_threats})</h2>
+        {finding_rows if finding_rows else '<p style="color:#10b981;font-size:14px;">✓ No malware signatures, cryptominers, or backdoors identified on this target.</p>'}
+    </div>
+</body>
+</html>"""
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        return filepath
+

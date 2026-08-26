@@ -32,13 +32,35 @@ function switchView(name) {
     if (navEl) navEl.classList.add('active');
 
     // Breadcrumb
-    const labels = { dashboard: 'Dashboard', scan: 'New Scan', reports: 'Reports', history: 'History' };
+    const labels = { dashboard: 'Dashboard', scan: 'New Scan', malware: 'Malware Scanner', reports: 'Reports', history: 'History', settings: 'Settings' };
     document.querySelector('.bc-current').textContent = labels[name] || name;
 }
 
-// ─── Target Helper ──────────────────────────────────────────────
+// ─── Target & Profile Helpers ────────────────────────────────────
+function normalizeUrl(url) {
+    if (!url) return '';
+    let trimmed = url.trim();
+    if (!/^https?:\/\//i.test(trimmed)) {
+        trimmed = 'https://' + trimmed;
+    }
+    return trimmed;
+}
+
 function setTarget(url) {
     document.getElementById('target-url-input').value = url;
+}
+
+function selectProfile(profile) {
+    const input = document.getElementById('scan-profile');
+    if (input) input.value = profile;
+    
+    document.querySelectorAll('.profile-card').forEach(card => {
+        if (card.dataset.profile === profile) {
+            card.classList.add('active');
+        } else {
+            card.classList.remove('active');
+        }
+    });
 }
 
 // ─── Chart Initialization ───────────────────────────────────────
@@ -132,9 +154,11 @@ function buildTooltipConfig() {
 function setupScanForm() {
     document.getElementById('scan-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const targetUrl = document.getElementById('target-url-input').value.trim();
+        const rawUrl    = document.getElementById('target-url-input').value.trim();
         const profile   = document.getElementById('scan-profile').value;
-        if (!targetUrl) return;
+        if (!rawUrl) return;
+
+        const targetUrl = normalizeUrl(rawUrl);
 
         // Switch to dashboard to show progress
         switchView('dashboard');
@@ -258,10 +282,12 @@ function renderDashboard(result) {
         const pillsEl = document.getElementById('tech-pills');
         pillsEl.innerHTML = '';
         result.technologies.forEach(t => {
-            const p = document.createElement('span');
+            const p = document.createElement('div');
             p.className = 'tech-pill';
-            p.title = t.category;
-            p.textContent = t.name + (t.version ? ` ${t.version}` : '');
+            p.innerHTML = `
+                <span class="tech-pill-name">${esc(t.name)}${t.version ? ` <span style="color:var(--amber);font-size:11px;">v${esc(t.version)}</span>` : ''}</span>
+                <span class="tech-pill-category">${esc(t.category)}</span>
+            `;
             pillsEl.appendChild(p);
         });
     }
@@ -442,7 +468,7 @@ function openDrawer(event, idx, filteredVulns) {
         </div>
 
         <div class="remediation-block">
-            <div class="remediation-block-label">🛡️ Remediation</div>
+            <div class="remediation-block-label">Remediation</div>
             ${esc(vuln.remediation)}
         </div>
 
@@ -797,4 +823,198 @@ function initSettings() {
         const el = document.getElementById(`mod-${mod}`);
         if (el) el.checked = val;
     });
+}
+
+// =============================================================================
+// MALWARE & THREAT SCANNER CONTROLLER
+// =============================================================================
+
+let currentMalwareScanId = null;
+
+async function startMalwareScan() {
+    const input = document.getElementById('malware-url-input');
+    const btn = document.getElementById('btn-start-malware');
+    const btnText = document.getElementById('malware-btn-text');
+    const rawUrl = input.value.trim();
+
+    if (!rawUrl) return;
+    const targetUrl = normalizeUrl(rawUrl);
+
+    btn.disabled = true;
+    btnText.textContent = 'Scanning...';
+
+    const loadingSec = document.getElementById('malware-loading-section');
+    const resultsSec = document.getElementById('malware-results-section');
+    const progressBar = document.getElementById('malware-progress-bar');
+    const progressPct = document.getElementById('malware-progress-pct');
+    const stepText = document.getElementById('malware-current-step');
+
+    resultsSec.classList.add('hidden');
+    loadingSec.classList.remove('hidden');
+
+    // Reset step UI
+    for (let i = 1; i <= 6; i++) {
+        const el = document.getElementById(`mstep-${i}`);
+        if (el) el.className = 'scan-step-item';
+    }
+    progressBar.style.width = '0%';
+    progressPct.textContent = '0%';
+    stepText.textContent = 'Connecting to target server...';
+    lucide.createIcons();
+
+    const scanSteps = [
+        { id: 'mstep-1', pct: 18, text: 'Fetching HTML DOM & External Assets...' },
+        { id: 'mstep-2', pct: 36, text: 'Scanning for Cryptominers & WASM miners...' },
+        { id: 'mstep-3', pct: 54, text: 'Auditing form listeners for Card Skimmers (Magecart)...' },
+        { id: 'mstep-4', pct: 72, text: 'Analyzing script entropy & de-obfuscating payloads...' },
+        { id: 'mstep-5', pct: 88, text: 'Inspecting stealth iframes & dropper tags...' },
+        { id: 'mstep-6', pct: 96, text: 'Probing server endpoints for exposed web shells...' }
+    ];
+
+    let currentStepIdx = 0;
+    const progressInterval = setInterval(() => {
+        if (currentStepIdx < scanSteps.length) {
+            const step = scanSteps[currentStepIdx];
+            progressBar.style.width = `${step.pct}%`;
+            progressPct.textContent = `${step.pct}%`;
+            stepText.textContent = step.text;
+
+            for (let i = 1; i <= 6; i++) {
+                const el = document.getElementById(`mstep-${i}`);
+                if (!el) continue;
+                if (i <= currentStepIdx) {
+                    el.className = 'scan-step-item done';
+                } else if (i === currentStepIdx + 1) {
+                    el.className = 'scan-step-item active';
+                } else {
+                    el.className = 'scan-step-item';
+                }
+            }
+            currentStepIdx++;
+        }
+    }, 280);
+
+    try {
+        const fetchPromise = fetch('/api/malware/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target_url: targetUrl })
+        });
+
+        // Ensure at least 1.8 seconds of visual animation for clean UX
+        const [resp] = await Promise.all([
+            fetchPromise,
+            new Promise(r => setTimeout(r, 1800))
+        ]);
+
+        clearInterval(progressInterval);
+
+        if (!resp.ok) {
+            throw new Error(`Scan failed: ${resp.statusText}`);
+        }
+
+        for (let i = 1; i <= 6; i++) {
+            const el = document.getElementById(`mstep-${i}`);
+            if (el) el.className = 'scan-step-item done';
+        }
+        progressBar.style.width = '100%';
+        progressPct.textContent = '100%';
+        stepText.textContent = 'Compromise evaluation complete!';
+
+        const result = await resp.json();
+        currentMalwareScanId = result.scan_id;
+
+        await new Promise(r => setTimeout(r, 350));
+        loadingSec.classList.add('hidden');
+        renderMalwareDashboard(result);
+    } catch (err) {
+        clearInterval(progressInterval);
+        loadingSec.classList.add('hidden');
+        alert(`Malware Scan Error: ${err.message}`);
+    } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Scan for Threats';
+        lucide.createIcons();
+    }
+}
+
+function renderMalwareDashboard(result) {
+    const resultsSec = document.getElementById('malware-results-section');
+    resultsSec.classList.remove('hidden');
+
+    const summary = result.summary;
+
+    // Verdict Badge
+    const verdictBadge = document.getElementById('malware-verdict-badge');
+    verdictBadge.textContent = summary.verdict;
+    verdictBadge.className = 'verdict-badge ' + (summary.is_clean ? 'clean' : (summary.overall_threat_score >= 80 ? 'infected' : 'suspicious'));
+
+    // Metadata
+    document.getElementById('malware-target-disp').textContent = result.target_url;
+    document.getElementById('malware-duration-disp').textContent = `${summary.duration_seconds}s`;
+    document.getElementById('malware-scripts-disp').textContent = `${summary.scripts_analyzed} scripts, ${summary.iframes_analyzed} iframes, ${summary.backdoors_probed} backdoors`;
+
+    // Threat Score
+    const scoreNum = document.getElementById('malware-score-num');
+    scoreNum.textContent = summary.overall_threat_score;
+    scoreNum.style.color = summary.is_clean ? 'var(--emerald)' : (summary.overall_threat_score >= 80 ? 'var(--critical)' : 'var(--amber)');
+
+    // 6 Threat Category Cards
+    if (result.categories?.length > 0) {
+        result.categories.forEach(cat => {
+            const cardEl = document.getElementById(`cat-card-${cat.category}`);
+            if (cardEl) {
+                const statusEl = cardEl.querySelector('.threat-cat-status');
+                if (cat.is_infected) {
+                    cardEl.classList.add('infected');
+                    if (statusEl) {
+                        statusEl.className = 'threat-cat-status status-infected';
+                        statusEl.textContent = `${cat.count} DETECTED`;
+                    }
+                } else {
+                    cardEl.classList.remove('infected');
+                    if (statusEl) {
+                        statusEl.className = 'threat-cat-status status-clean';
+                        statusEl.textContent = 'CLEAN';
+                    }
+                }
+            }
+        });
+    }
+
+    // Populate Findings Table
+    const tbody = document.getElementById('malware-table-body');
+    tbody.innerHTML = '';
+
+    if (!result.findings || result.findings.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;color:var(--emerald);padding:30px;font-weight:600;">
+                    ✓ No malware signatures, cryptominers, or backdoors discovered on target.
+                </td>
+            </tr>
+        `;
+    } else {
+        result.findings.forEach((f, idx) => {
+            const tr = document.createElement('tr');
+            const sevClass = `badge-${f.severity.toLowerCase()}`;
+            tr.innerHTML = `
+                <td>${idx + 1}</td>
+                <td style="font-weight:700;color:var(--text-primary);">${esc(f.name)}</td>
+                <td><span style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary);">${esc(f.category)}</span></td>
+                <td><span class="badge ${sevClass}">${esc(f.severity)}</span></td>
+                <td style="font-family:var(--font-mono);font-weight:700;color:var(--critical);">${f.threat_score}</td>
+                <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--cyan);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(f.affected_url)}">${esc(f.affected_url)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+}
+
+function downloadMalwareReport(format) {
+    if (!currentMalwareScanId) {
+        alert('Please run a malware scan first.');
+        return;
+    }
+    window.location.href = `/api/malware/report/${format}/${currentMalwareScanId}`;
 }

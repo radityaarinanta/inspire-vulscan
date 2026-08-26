@@ -22,7 +22,7 @@ def main():
     url = f"http://{host}:{port}"
 
     print("=" * 65)
-    print(" 🛡️  INSPIRE — Web Vulnerability Scanner & Security Audit Suite")
+    print("  INSPIRE — Web Vulnerability Scanner & Security Audit Suite")
     print("=" * 65)
     print(f" [*] Starting local web dashboard on: {url}")
     print(" [*] Opening your default browser automatically...")
@@ -33,7 +33,7 @@ def main():
     threading.Thread(target=open_browser, args=(url,), daemon=True).start()
 
     # Start FastAPI server
-    uvicorn.run("app:app", host=host, port=port, log_level="info")
+    uvicorn.run("app:app", host=host, port=port, log_level="info", reload=True)
 
 if __name__ == "__main__":
     main()

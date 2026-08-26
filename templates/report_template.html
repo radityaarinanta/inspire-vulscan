@@ -325,7 +325,7 @@
                 </div>
             </div>
             <div style="margin-top: 20px; text-align: right;">
-                <button onclick="window.print()" class="print-btn">🖨️ Print / Save as PDF</button>
+                <button onclick="window.print()" class="print-btn">Print / Save as PDF</button>
             </div>
         </div>
 
@@ -357,7 +357,7 @@
         {% if result.technologies %}
         <div class="section-card">
             <div class="section-title">
-                <span>🔍 Detected Technology Stack</span>
+                <span>Detected Technology Stack</span>
                 <span style="font-size: 13px; color: var(--text-muted); font-weight: normal;">{{ result.technologies|length }} components identified</span>
             </div>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -373,7 +373,7 @@
         <!-- Findings List -->
         <div class="section-card">
             <div class="section-title">
-                <span>📋 Audit Findings & Actionable Remediation</span>
+                <span>Audit Findings & Actionable Remediation</span>
                 <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">{{ result.vulnerabilities|length }} issues recorded</span>
             </div>
 
@@ -404,7 +404,7 @@
                 </div>
 
                 <div class="remediation-box">
-                    <strong>🛡️ Recommended Remediation:</strong> {{ vuln.remediation }}
+                    <strong>Recommended Remediation:</strong> {{ vuln.remediation }}
                 </div>
 
                 {% if vuln.evidence %}

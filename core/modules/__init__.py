@@ -9,6 +9,7 @@ from .sensitive_files import SensitiveFilesScanner
 from .open_redirect import OpenRedirectScanner
 from .ssl_tls import SSLScanner
 from .tech_stack import TechStackScanner
+from .malware import WebMalwareScanner
 
 __all__ = [
     "WebCrawler",
@@ -18,5 +19,6 @@ __all__ = [
     "SensitiveFilesScanner",
     "OpenRedirectScanner",
     "SSLScanner",
-    "TechStackScanner"
+    "TechStackScanner",
+    "WebMalwareScanner"
 ]

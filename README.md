@@ -1,4 +1,7 @@
-# INSPIRE — Modern Web Vulnerability Scanner & Security Audit Suite
+<div align="center">
+
+# INSPIRE
+### Enterprise Web Vulnerability & Threat Assessment Suite
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
@@ -6,17 +9,22 @@
   <img src="https://img.shields.io/badge/OWASP-Top%2010%20Aligned-00F0FF?style=for-the-badge&logo=owasp&logoColor=white" alt="OWASP Top 10" />
   <img src="https://img.shields.io/badge/AsyncIO-High%20Performance-10B981?style=for-the-badge&logo=speedtest&logoColor=white" alt="AsyncIO" />
   <img src="https://img.shields.io/badge/UI-Cyber%20Glassmorphism-f59e0b?style=for-the-badge" alt="UI Theme" />
-  <img src="https://img.shields.io/badge/Status-Under%20Active%20Development-orange?style=for-the-badge&logo=git" alt="Status" />
+  <img src="https://img.shields.io/badge/Status-Active%20Development-orange?style=for-the-badge&logo=git" alt="Status" />
   <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" alt="License" />
 </p>
 
-```
-  ___ _  _ ___ ___ ___ ___ 
- |_ _| \| / __| _ \ |_ _| _ \
-  | || .` \__ \  _/ | || |/ /
- |___|_|\_|___/_| |___|_|_\_\
+```text
+ ██╗███╗   ██╗███████╗██████╗ ██╗██████╗ ███████╗
+ ██║████╗  ██║██╔════╝██╔══██╗██║██╔══██╗██╔════╝
+ ██║██╔██╗ ██║███████╗██████╔╝██║██████╔╝█████╗  
+ ██║██║╚██╗██║╚════██║██╔═══╝ ██║██╔══██╗██╔══╝  
+ ██║██║ ╚████║███████║██║     ██║██║  ██║███████╗
+ ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝     ╚═╝╚═╝  ╚═╝╚══════╝
+
   Enterprise Web Security & Vulnerability Assessment Platform
 ```
+
+</div>
 
 **INSPIRE Security Suite** is an enterprise-grade, high-performance asynchronous web vulnerability scanner and security assessment platform built with Python (`FastAPI` & `AsyncIO`). Designed to detect web application vulnerabilities aligned with **OWASP Top 10** standards, it features a futuristic **Cyber Glassmorphism Dark Dashboard**, real-time log telemetry via **WebSockets**, interactive data visualization powered by **Chart.js**, an automated **Security Letter Grade (*A+ to F*)** risk scoring model, and 1-click export of executive audit reports in **5 formats: PDF, Standalone HTML, Structured JSON, OASIS SARIF v2.1.0, & Excel CSV**.
 
@@ -203,17 +211,21 @@ python cli.py http://testphp.vulnweb.com -p deep --all-reports
 
 # 4. Generate specific reports (e.g. SARIF for GitHub Code Scanning and CSV for Excel)
 python cli.py http://testphp.vulnweb.com --sarif --csv
+
+# 5. Run dedicated Web Malware & Client-Side Threat Scan (Cryptominers, Card Skimmers, Backdoors)
+python cli.py https://example.com --mode malware --all-reports
 ```
 
 #### CLI Options & Flags:
 * `url`: Target web application URL (e.g. `http://testphp.vulnweb.com`).
-* `-p, --profile`: Scan profile selection (`quick`, `standard`, `deep`).
+* `-m, --mode`: Scan mode selection (`vuln` for Vulnerability Scan, `malware` for Web Malware & Threat Scan).
+* `-p, --profile`: Scan profile selection for vulnerability mode (`quick`, `standard`, `deep`).
 * `--pdf`: Generates an Executive PDF Report in the `reports/` directory.
 * `--html`: Generates a Standalone HTML Report in the `reports/` directory.
 * `--json`: Generates a Full Structured JSON Report in the `reports/` directory.
 * `--sarif`: Generates an OASIS SARIF v2.1.0 Report (compatible with GitHub Security).
 * `--csv`: Generates a Spreadsheet CSV Report in the `reports/` directory.
-* `--all-reports`: Generates all 5 report formats simultaneously.
+* `--all-reports`: Generates all applicable report formats simultaneously.
 
 ---
 
@@ -224,6 +236,7 @@ python cli.py http://testphp.vulnweb.com --sarif --csv
 | **Quick** | Audits Security Headers, SSL/TLS, Technology Stack, and Basic Sensitive Files without launching the crawler. | Rapid reconnaissance & initial server configuration audit. |
 | **Standard** *(Default)* | Includes all *Quick* modules + Web Crawler (depth 2, max 15 pages), SQLi, XSS, and Open Redirect injections across forms & parameters. | Comprehensive security evaluation for standard web apps. |
 | **Deep** | Comprehensive scan with full crawling, extended endpoint mapping, and thorough payload verification. | In-depth penetration testing on complex web applications. |
+| **Malware Scan** *(Dedicated Mode)* | Standalone compromise detection for cryptominers, card skimmers (Magecart), obfuscated payloads, stealth iframes, and backdoors. | Rapid compromise verification ensuring visitor and customer safety. |
 
 ---
 
@@ -240,8 +253,8 @@ Web Vulnerability Scanner/
 ├── core/
 │   ├── __init__.py
 │   ├── engine.py               # Asynchronous Multi-threaded Scan Orchestrator
-│   ├── models.py               # Pydantic Schemas (Vulnerability, Severity, Results, Config)
-│   ├── reporter.py             # PDF (ReportLab) & HTML report generation engine
+│   ├── models.py               # Pydantic Schemas (Vulnerability, Malware, Severity, Config)
+│   ├── reporter.py             # PDF, HTML, JSON, SARIF & CSV report generation engine
 │   └── modules/                # Specialized Security Detection Modules
 │       ├── __init__.py
 │       ├── crawler.py          # Asynchronous Web Crawler & Form Extractor
@@ -251,7 +264,8 @@ Web Vulnerability Scanner/
 │       ├── sensitive_files.py  # .env, .git, AWS keys, phpinfo, & admin endpoint prober
 │       ├── open_redirect.py    # Unvalidated external URL redirection scanner
 │       ├── ssl_tls.py          # SSL certificate verification, expiry, & HTTPS checks
-│       └── tech_stack.py       # Web Server, Framework, CMS & Frontend Fingerprinting
+│       ├── tech_stack.py       # Web Server, Framework, CMS & Frontend Fingerprinting
+│       └── malware.py          # Web Malware, Cryptojacking, Card Skimmer & Backdoor Hunter
 ├── templates/
 │   ├── index.html              # Cyber Glassmorphism Web Dashboard (SPA Multi-view)
 │   └── report_template.html    # Standalone HTML audit report template
