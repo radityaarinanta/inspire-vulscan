@@ -564,6 +564,9 @@ button { cursor: pointer; font-family: inherit; }
 }
 .btn-export svg { width: 14px; height: 14px; color: var(--amber); }
 .btn-export--html svg { color: var(--emerald); }
+.btn-export--json svg { color: #06b6d4; }
+.btn-export--sarif svg { color: #a855f7; }
+.btn-export--csv svg { color: #34d399; }
 .btn-export:hover:not(:disabled) {
     background: var(--bg-hover);
     border-color: var(--amber);

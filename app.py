@@ -104,6 +104,48 @@ async def download_html_report(scan_id: str):
         filename=f"Inspire_Report_{scan_id}.html"
     )
 
+@app.get("/api/scan/report/json/{scan_id}")
+async def download_json_report(scan_id: str):
+    if scan_id not in scanner_engine.active_scans:
+        raise HTTPException(status_code=404, detail="Scan result not found.")
+    
+    result = scanner_engine.active_scans[scan_id]
+    json_path = reporter.generate_json_report(result)
+    
+    return FileResponse(
+        json_path,
+        media_type="application/json",
+        filename=f"Inspire_Report_{scan_id}.json"
+    )
+
+@app.get("/api/scan/report/sarif/{scan_id}")
+async def download_sarif_report(scan_id: str):
+    if scan_id not in scanner_engine.active_scans:
+        raise HTTPException(status_code=404, detail="Scan result not found.")
+    
+    result = scanner_engine.active_scans[scan_id]
+    sarif_path = reporter.generate_sarif_report(result)
+    
+    return FileResponse(
+        sarif_path,
+        media_type="application/json",
+        filename=f"Inspire_Report_{scan_id}.sarif"
+    )
+
+@app.get("/api/scan/report/csv/{scan_id}")
+async def download_csv_report(scan_id: str):
+    if scan_id not in scanner_engine.active_scans:
+        raise HTTPException(status_code=404, detail="Scan result not found.")
+    
+    result = scanner_engine.active_scans[scan_id]
+    csv_path = reporter.generate_csv_report(result)
+    
+    return FileResponse(
+        csv_path,
+        media_type="text/csv",
+        filename=f"Inspire_Report_{scan_id}.csv"
+    )
+
 @app.websocket("/ws/scan/{scan_id}")
 async def scan_websocket_endpoint(websocket: WebSocket, scan_id: str):
     await websocket.accept()

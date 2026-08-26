@@ -206,13 +206,25 @@
                         <i data-lucide="download" class="card-icon"></i>
                     </div>
                     <div class="export-btns">
-                        <button class="btn-export" id="btn-export-pdf" disabled>
+                        <button class="btn-export" id="btn-export-pdf" disabled title="Download Executive PDF Report">
                             <i data-lucide="file-text"></i>
                             Executive PDF
                         </button>
-                        <button class="btn-export btn-export--html" id="btn-export-html" disabled>
+                        <button class="btn-export btn-export--html" id="btn-export-html" disabled title="Download Standalone HTML Report">
                             <i data-lucide="code-2"></i>
                             HTML Report
+                        </button>
+                        <button class="btn-export btn-export--json" id="btn-export-json" disabled title="Download Structured JSON Report">
+                            <i data-lucide="file-json"></i>
+                            Structured JSON
+                        </button>
+                        <button class="btn-export btn-export--sarif" id="btn-export-sarif" disabled title="Download OASIS SARIF v2.1.0 (GitHub Code Scanning)">
+                            <i data-lucide="shield-alert"></i>
+                            OASIS SARIF
+                        </button>
+                        <button class="btn-export btn-export--csv" id="btn-export-csv" disabled title="Download Spreadsheet CSV Report">
+                            <i data-lucide="table"></i>
+                            Spreadsheet CSV
                         </button>
                     </div>
                     <div class="ssl-info-box" id="ssl-info-box" style="display:none;">
@@ -502,7 +514,11 @@
                                 <select class="settings-select" id="setting-report-format" onchange="saveSetting('reportFormat', this.value)">
                                     <option value="pdf">PDF Only</option>
                                     <option value="html">HTML Only</option>
-                                    <option value="both" selected>Both PDF & HTML</option>
+                                    <option value="json">JSON Only</option>
+                                    <option value="sarif">SARIF v2.1.0 Only</option>
+                                    <option value="csv">CSV Only</option>
+                                    <option value="both">PDF & HTML</option>
+                                    <option value="all" selected>All Formats (PDF, HTML, JSON, SARIF, CSV)</option>
                                 </select>
                             </div>
                         </div>

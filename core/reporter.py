@@ -1,5 +1,7 @@
 import os
 import io
+import json
+import csv
 from datetime import datetime
 from typing import Dict, Any, List
 
@@ -12,7 +14,7 @@ from reportlab.platypus import (
 )
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from .models import ScanResult, Severity
+from .models import ScanResult, Severity, FindingEvidence
 
 class ReportGenerator:
     def __init__(self, template_dir: str = "templates", reports_dir: str = "reports"):
@@ -27,6 +29,214 @@ class ReportGenerator:
             )
         else:
             self.jinja_env = None
+
+    def generate_json_report(self, result: ScanResult, filename: str = None) -> str:
+        """Generates comprehensive structured JSON audit report."""
+        filename = filename or f"inspire_scan_report_{result.scan_id}.json"
+        filepath = os.path.join(self.reports_dir, filename)
+
+        data = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "generator": {
+                "name": "Inspire Security Audit Suite",
+                "version": "1.0.0",
+                "schema_version": "1.0.0",
+                "website": "https://github.com/radityaarinanta/inspire-vulscan",
+                "generated_at": datetime.utcnow().isoformat() + "Z"
+            },
+            "scan_data": result.model_dump()
+        }
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        return filepath
+
+    def generate_sarif_report(self, result: ScanResult, filename: str = None) -> str:
+        """
+        Generates standard OASIS SARIF v2.1.0 report.
+        Compatible with GitHub Security Code Scanning and IDE SARIF viewers.
+        """
+        filename = filename or f"inspire_scan_report_{result.scan_id}.sarif"
+        filepath = os.path.join(self.reports_dir, filename)
+
+        rules = []
+        rule_indices = {}
+        sarif_results = []
+
+        for vuln in result.vulnerabilities:
+            # Register rule if not already present
+            if vuln.id not in rule_indices:
+                rule_idx = len(rules)
+                rule_indices[vuln.id] = rule_idx
+                
+                # Severity to SARIF level mapping
+                if vuln.severity in [Severity.CRITICAL, Severity.HIGH]:
+                    level = "error"
+                elif vuln.severity == Severity.MEDIUM:
+                    level = "warning"
+                else:
+                    level = "note"
+
+                tags = ["security", vuln.category]
+                if vuln.cwe_id:
+                    tags.append(vuln.cwe_id)
+                if vuln.owasp_category:
+                    tags.append(vuln.owasp_category)
+
+                rule_obj = {
+                    "id": vuln.id,
+                    "name": vuln.name.replace(" ", "_").replace("'", "").replace('"', ""),
+                    "shortDescription": {"text": vuln.name},
+                    "fullDescription": {"text": vuln.description},
+                    "help": {
+                        "text": f"Remediation:\n{vuln.remediation}\n\nImpact:\n{vuln.impact}",
+                        "markdown": f"### 🛡️ Remediation\n{vuln.remediation}\n\n### ⚠️ Impact\n{vuln.impact}"
+                    },
+                    "helpUri": vuln.references[0] if vuln.references else "https://owasp.org/www-project-top-ten/",
+                    "properties": {
+                        "tags": tags,
+                        "precision": "high",
+                        "security-severity": str(vuln.cvss_score)
+                    },
+                    "defaultConfiguration": {
+                        "level": level
+                    }
+                }
+                rules.append(rule_obj)
+            else:
+                rule_idx = rule_indices[vuln.id]
+
+            # Build result instance
+            if vuln.severity in [Severity.CRITICAL, Severity.HIGH]:
+                res_level = "error"
+            elif vuln.severity == Severity.MEDIUM:
+                res_level = "warning"
+            else:
+                res_level = "note"
+
+            locations = []
+            ev_list = vuln.evidence if vuln.evidence else [FindingEvidence(url=result.target_url, description="Security finding")]
+            for ev in ev_list:
+                loc = {
+                    "physicalLocation": {
+                        "artifactLocation": {
+                            "uri": ev.url or result.target_url
+                        },
+                        "region": {
+                            "startLine": 1,
+                            "snippet": {
+                                "text": ev.response_snippet or ev.payload or ev.description
+                            }
+                        }
+                    }
+                }
+                if ev.parameter:
+                    loc["logicalLocations"] = [
+                        {
+                            "name": ev.parameter,
+                            "kind": "parameter"
+                        }
+                    ]
+                locations.append(loc)
+
+            sarif_results.append({
+                "ruleId": vuln.id,
+                "ruleIndex": rule_idx,
+                "level": res_level,
+                "message": {
+                    "text": f"[{vuln.severity.value}] {vuln.name} detected at {result.target_url}. {vuln.description}"
+                },
+                "locations": locations,
+                "properties": {
+                    "cvss_score": vuln.cvss_score,
+                    "cwe_id": vuln.cwe_id,
+                    "owasp_category": vuln.owasp_category,
+                    "severity": vuln.severity.value
+                }
+            })
+
+        sarif_doc = {
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [
+                {
+                    "tool": {
+                        "driver": {
+                            "name": "Inspire Security Suite",
+                            "semanticVersion": "1.0.0",
+                            "informationUri": "https://github.com/radityaarinanta/inspire-vulscan",
+                            "rules": rules
+                        }
+                    },
+                    "results": sarif_results,
+                    "invocations": [
+                        {
+                            "executionSuccessful": True,
+                            "endTimeUtc": result.end_time or (datetime.utcnow().isoformat() + "Z")
+                        }
+                    ]
+                }
+            ]
+        }
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(sarif_doc, f, indent=2, ensure_ascii=False)
+
+        return filepath
+
+    def generate_csv_report(self, result: ScanResult, filename: str = None) -> str:
+        """Generates structured CSV report for spreadsheet audits."""
+        filename = filename or f"inspire_scan_report_{result.scan_id}.csv"
+        filepath = os.path.join(self.reports_dir, filename)
+
+        headers = [
+            "Vulnerability ID",
+            "Severity",
+            "CVSS Score",
+            "Vulnerability Name",
+            "Category",
+            "OWASP Category",
+            "CWE ID",
+            "Affected URL / Endpoint",
+            "Parameter",
+            "Payload",
+            "Description",
+            "Impact",
+            "Remediation",
+            "References",
+            "Discovered At"
+        ]
+
+        with open(filepath, "w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+
+            for vuln in result.vulnerabilities:
+                ev_urls = "; ".join([ev.url for ev in vuln.evidence if ev.url]) or result.target_url
+                ev_params = "; ".join([ev.parameter for ev in vuln.evidence if ev.parameter]) or "N/A"
+                ev_payloads = "; ".join([ev.payload for ev in vuln.evidence if ev.payload]) or "N/A"
+                refs = "; ".join(vuln.references) if vuln.references else "N/A"
+
+                writer.writerow([
+                    vuln.id,
+                    vuln.severity.value,
+                    vuln.cvss_score,
+                    vuln.name,
+                    vuln.category,
+                    vuln.owasp_category or "N/A",
+                    vuln.cwe_id or "N/A",
+                    ev_urls,
+                    ev_params,
+                    ev_payloads,
+                    vuln.description,
+                    vuln.impact,
+                    vuln.remediation,
+                    refs,
+                    vuln.timestamp
+                ])
+
+        return filepath
 
     def generate_html_report(self, result: ScanResult, filename: str = None) -> str:
         filename = filename or f"inspire_scan_report_{result.scan_id}.html"

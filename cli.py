@@ -34,7 +34,7 @@ BANNER = r"""
 def print_banner():
     console.print(BANNER)
 
-async def run_cli_scan(url: str, profile_str: str, export_pdf: bool, export_html: bool):
+async def run_cli_scan(url: str, profile_str: str, export_pdf: bool, export_html: bool, export_json: bool = False, export_sarif: bool = False, export_csv: bool = False):
     print_banner()
 
     # Normalize Profile
@@ -137,13 +137,26 @@ async def run_cli_scan(url: str, profile_str: str, export_pdf: bool, export_html
     if export_html:
         html_path = reporter.generate_html_report(result)
         console.print(f"[bold green]✓ Standalone HTML Report generated:[/bold green] [cyan]{html_path}[/cyan]")
+    if export_json:
+        json_path = reporter.generate_json_report(result)
+        console.print(f"[bold green]✓ Structured JSON Report generated:[/bold green] [cyan]{json_path}[/cyan]")
+    if export_sarif:
+        sarif_path = reporter.generate_sarif_report(result)
+        console.print(f"[bold green]✓ OASIS SARIF v2.1.0 Report generated:[/bold green] [cyan]{sarif_path}[/cyan]")
+    if export_csv:
+        csv_path = reporter.generate_csv_report(result)
+        console.print(f"[bold green]✓ Spreadsheet CSV Report generated:[/bold green] [cyan]{csv_path}[/cyan]")
 
 def main():
     parser = argparse.ArgumentParser(description="Inspire - Modern Web Vulnerability Scanner")
     parser.add_argument("url", nargs="?", help="Target website URL (e.g. http://testphp.vulnweb.com)")
     parser.add_argument("-p", "--profile", default="standard", choices=["quick", "standard", "deep"], help="Scan Profile (quick, standard, deep)")
     parser.add_argument("--pdf", action="store_true", help="Generate Executive PDF Report")
-    parser.add_argument("--html", action="store_true", help="Generate HTML Report")
+    parser.add_argument("--html", action="store_true", help="Generate Standalone HTML Report")
+    parser.add_argument("--json", action="store_true", help="Generate Full Structured JSON Report")
+    parser.add_argument("--sarif", action="store_true", help="Generate OASIS SARIF v2.1.0 Report (GitHub Security compatible)")
+    parser.add_argument("--csv", action="store_true", help="Generate Spreadsheet CSV Report")
+    parser.add_argument("--all-reports", action="store_true", help="Generate all 5 report formats simultaneously (PDF, HTML, JSON, SARIF, CSV)")
 
     args = parser.parse_args()
 
@@ -158,11 +171,20 @@ def main():
     if not target_url.startswith(("http://", "https://")):
         target_url = "http://" + target_url
 
+    export_pdf = args.pdf or args.all_reports
+    export_html = args.html or args.all_reports
+    export_json = args.json or args.all_reports
+    export_sarif = args.sarif or args.all_reports
+    export_csv = args.csv or args.all_reports
+
     asyncio.run(run_cli_scan(
         url=target_url,
         profile_str=args.profile,
-        export_pdf=args.pdf,
-        export_html=args.html
+        export_pdf=export_pdf,
+        export_html=export_html,
+        export_json=export_json,
+        export_sarif=export_sarif,
+        export_csv=export_csv
     ))
 
 if __name__ == "__main__":

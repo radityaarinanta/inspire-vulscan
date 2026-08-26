@@ -18,7 +18,7 @@
   Enterprise Web Security & Vulnerability Assessment Platform
 ```
 
-**INSPIRE Security Suite** is an enterprise-grade, high-performance asynchronous web vulnerability scanner and security assessment platform built with Python (`FastAPI` & `AsyncIO`). Designed to detect web application vulnerabilities aligned with **OWASP Top 10** standards, it features a futuristic **Cyber Glassmorphism Dark Dashboard**, real-time log telemetry via **WebSockets**, interactive data visualization powered by **Chart.js**, an automated **Security Letter Grade (*A+ to F*)** risk scoring model, and 1-click export of executive audit reports in **PDF & Standalone HTML** formats.
+**INSPIRE Security Suite** is an enterprise-grade, high-performance asynchronous web vulnerability scanner and security assessment platform built with Python (`FastAPI` & `AsyncIO`). Designed to detect web application vulnerabilities aligned with **OWASP Top 10** standards, it features a futuristic **Cyber Glassmorphism Dark Dashboard**, real-time log telemetry via **WebSockets**, interactive data visualization powered by **Chart.js**, an automated **Security Letter Grade (*A+ to F*)** risk scoring model, and 1-click export of executive audit reports in **5 formats: PDF, Standalone HTML, Structured JSON, OASIS SARIF v2.1.0, & Excel CSV**.
 
 > [!NOTE]
 > **Project Status — Active Development (v1.0 Beta):**
@@ -79,14 +79,17 @@ INSPIRE comes equipped with 7 modular, asynchronous automated security audit eng
 
 ---
 
-### 5. Executive Audit Reports (PDF & Standalone HTML)
+### 5. Multi-Format Security Audit Reports (PDF, HTML, JSON, SARIF, CSV)
 * **Executive PDF Report**: Rendered using ReportLab with professional layouts, executive summaries, risk metric tables, and remediation roadmaps.
 * **Standalone HTML Report**: Self-contained report with modern dark styling, viewable in any browser with zero server dependencies.
+* **Full Structured JSON**: Complete machine-readable scan data, technical findings, and PoC evidence for integration into custom security tooling.
+* **OASIS SARIF v2.1.0**: Standardized Static Analysis Results Interchange Format for native integration with the **GitHub Security Code Scanning tab**, GitLab, and IDEs.
+* **Spreadsheet CSV**: Structured spreadsheet-ready audit export with UTF-8 BOM encoding for seamless analysis in Microsoft Excel and Google Sheets.
 
 ---
 
 ### 6. Rich Terminal CLI
-* Supports standalone terminal execution powered by the `rich` library with ASCII banners, live spinners, structured tables, and direct PDF/HTML export options.
+* Supports standalone terminal execution powered by the `rich` library with ASCII banners, live spinners, structured tables, and 1-click multi-format export flags.
 
 ---
 
@@ -195,15 +198,22 @@ python cli.py http://testphp.vulnweb.com
 # 2. Quick scan + automatic PDF report export
 python cli.py https://httpbin.org -p quick --pdf
 
-# 3. Deep scan + export both PDF and HTML reports simultaneously
-python cli.py http://testphp.vulnweb.com -p deep --pdf --html
+# 3. Deep scan + export all 5 report formats simultaneously (PDF, HTML, JSON, SARIF, CSV)
+python cli.py http://testphp.vulnweb.com -p deep --all-reports
+
+# 4. Generate specific reports (e.g. SARIF for GitHub Code Scanning and CSV for Excel)
+python cli.py http://testphp.vulnweb.com --sarif --csv
 ```
 
 #### CLI Options & Flags:
 * `url`: Target web application URL (e.g. `http://testphp.vulnweb.com`).
 * `-p, --profile`: Scan profile selection (`quick`, `standard`, `deep`).
-* `--pdf`: Automatically generates an Executive PDF Report in the `reports/` directory.
-* `--html`: Automatically generates a Standalone HTML Report in the `reports/` directory.
+* `--pdf`: Generates an Executive PDF Report in the `reports/` directory.
+* `--html`: Generates a Standalone HTML Report in the `reports/` directory.
+* `--json`: Generates a Full Structured JSON Report in the `reports/` directory.
+* `--sarif`: Generates an OASIS SARIF v2.1.0 Report (compatible with GitHub Security).
+* `--csv`: Generates a Spreadsheet CSV Report in the `reports/` directory.
+* `--all-reports`: Generates all 5 report formats simultaneously.
 
 ---
 
@@ -267,12 +277,12 @@ Through the **Settings** view in the Web Dashboard, you can customize:
 
 ---
 
-## 🗺️ Roadmap & Planned Capabilities
+##  Roadmap & Planned Capabilities
 
 - [ ] **Authenticated Scanning**: Session cookie injection, HTTP Basic/Bearer Auth, and login sequence replay.
 - [ ] **Server-Side Request Forgery (SSRF)**: Out-of-band callback listeners and DNS token resolution probe engine.
 - [ ] **DOM-based XSS & Single Page Apps (SPA)**: Headless browser integration for dynamic JavaScript execution and DOM sink analysis.
-- [ ] **Extended Export Formats**: Standardized JSON, SARIF (*Static Analysis Results Interchange Format*), and CSV reporting.
+- [x] **Extended Export Formats**: Standardized JSON, SARIF (*Static Analysis Results Interchange Format*), and CSV reporting.
 - [ ] **CI/CD Security Gate**: GitHub Actions and GitLab CI pipeline integrations with threshold-based build breaking.
 
 ---

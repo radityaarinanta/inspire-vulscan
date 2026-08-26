@@ -210,6 +210,10 @@ function clearDashboard() {
     document.getElementById('stat-crawled').textContent = 'Pages crawled: —';
     document.getElementById('grade-ring-fill').setAttribute('stroke-dasharray', '0 201');
     document.getElementById('findings-count-badge').textContent = '0';
+    ['pdf', 'html', 'json', 'sarif', 'csv'].forEach(fmt => {
+        const btn = document.getElementById(`btn-export-${fmt}`);
+        if (btn) btn.disabled = true;
+    });
     renderTableEmpty();
 }
 
@@ -262,9 +266,11 @@ function renderDashboard(result) {
         });
     }
 
-    // Enable export
-    document.getElementById('btn-export-pdf').disabled = false;
-    document.getElementById('btn-export-html').disabled = false;
+    // Enable export buttons
+    ['pdf', 'html', 'json', 'sarif', 'csv'].forEach(fmt => {
+        const btn = document.getElementById(`btn-export-${fmt}`);
+        if (btn) btn.disabled = false;
+    });
 
     // Render table
     renderTable(result.vulnerabilities);
@@ -516,11 +522,13 @@ function ts() {
 
 // ─── Export Buttons ─────────────────────────────────────────────
 function setupExportButtons() {
-    document.getElementById('btn-export-pdf').addEventListener('click', () => {
-        if (currentScanId) window.open(`/api/scan/report/pdf/${currentScanId}`, '_blank');
-    });
-    document.getElementById('btn-export-html').addEventListener('click', () => {
-        if (currentScanId) window.open(`/api/scan/report/html/${currentScanId}`, '_blank');
+    ['pdf', 'html', 'json', 'sarif', 'csv'].forEach(fmt => {
+        const btn = document.getElementById(`btn-export-${fmt}`);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                if (currentScanId) window.open(`/api/scan/report/${fmt}/${currentScanId}`, '_blank');
+            });
+        }
     });
 }
 

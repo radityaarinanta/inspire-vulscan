@@ -43,6 +43,8 @@ venv.bak/
 reports/*.pdf
 reports/*.html
 reports/*.json
+reports/*.sarif
+reports/*.csv
 !reports/.gitkeep
 
 # Environment variables
