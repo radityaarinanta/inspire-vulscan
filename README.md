@@ -6,6 +6,7 @@
   <img src="https://img.shields.io/badge/OWASP-Top%2010%20Aligned-00F0FF?style=for-the-badge&logo=owasp&logoColor=white" alt="OWASP Top 10" />
   <img src="https://img.shields.io/badge/AsyncIO-High%20Performance-10B981?style=for-the-badge&logo=speedtest&logoColor=white" alt="AsyncIO" />
   <img src="https://img.shields.io/badge/UI-Cyber%20Glassmorphism-f59e0b?style=for-the-badge" alt="UI Theme" />
+  <img src="https://img.shields.io/badge/Status-Under%20Active%20Development-orange?style=for-the-badge&logo=git" alt="Status" />
   <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" alt="License" />
 </p>
 
@@ -17,93 +18,97 @@
   Enterprise Web Security & Vulnerability Assessment Platform
 ```
 
-**INSPIRE Security Suite** adalah platform audit keamanan web dan pemindai kerentanan (*web vulnerability scanner*) berbasis Python dengan arsitektur **asynchronous high-performance**. Dirancang untuk mendeteksi kerentanan keamanan web sesuai standar **OWASP Top 10**, dilengkapi antarmuka **Cyber Glassmorphism Dark Dashboard**, telemetri log real-time melalui **WebSocket**, visualisasi data interaktif **Chart.js**, **Security Letter Grade (*A+ hingga F*)**, serta ekspor laporan audit eksekutif **PDF & HTML** dalam 1 klik.
+**INSPIRE Security Suite** is an enterprise-grade, high-performance asynchronous web vulnerability scanner and security assessment platform built with Python (`FastAPI` & `AsyncIO`). Designed to detect web application vulnerabilities aligned with **OWASP Top 10** standards, it features a futuristic **Cyber Glassmorphism Dark Dashboard**, real-time log telemetry via **WebSockets**, interactive data visualization powered by **Chart.js**, an automated **Security Letter Grade (*A+ to F*)** risk scoring model, and 1-click export of executive audit reports in **PDF & Standalone HTML** formats.
+
+> [!NOTE]
+> **Project Status — Active Development (v1.0 Beta):**
+> INSPIRE is actively being maintained and expanded. New vulnerability detection heuristics, scanning modules, and performance optimizations are continuously being developed. Feedback, issue reports, and feature suggestions are welcome!
 
 ---
 
-## Fitur Unggulan (Key Features)
+## Key Features
 
 ### 1. Multi-Vector Vulnerability Detection Engines
-Aplikasi dilengkapi dengan 7 modul deteksi keamanan otomatis:
+INSPIRE comes equipped with 7 modular, asynchronous automated security audit engines:
 
 * **SQL Injection (SQLi) Detection Engine**:
-  * Menguji parameter URL dan formulir HTML (`GET` & `POST`).
-  * Mendukung deteksi heuristik dan pencocokan pesan error database untuk **MySQL/MariaDB**, **PostgreSQL**, **Microsoft SQL Server**, **Oracle**, dan **SQLite**.
-  * Dilengkapi payload non-destruktif (*syntax break, boolean-based, order by discovery*).
+  * Scans both URL query parameters and HTML form inputs (`GET` & `POST`).
+  * Features multi-DBMS error signature matching and heuristic detection for **MySQL/MariaDB**, **PostgreSQL**, **Microsoft SQL Server**, **Oracle**, and **SQLite**.
+  * Employs non-destructive payloads (*syntax breaks, boolean-based verification, order-by discovery*).
 * **Cross-Site Scripting (XSS) Scanner**:
-  * Menginjeksi *safe canary payloads* (`<script>`, `<img>`, `<svg>`, custom tags) ke seluruh parameter input.
-  * Menganalisis respon HTTP untuk mendeteksi *reflected unescaped HTML context* yang berpotensi dieksploitasi.
+  * Injects *safe canary payloads* (`<script>`, `<img>`, `<svg>`, custom tags) across all discovered input fields and parameters.
+  * Evaluates HTTP response bodies to detect *reflected unescaped HTML contexts* prone to exploitation.
 * **Security Headers & Cookie Security Auditor**:
-  * Memeriksa keberadaan dan konfigurasi header penting: `Content-Security-Policy` (CSP), `Strict-Transport-Security` (HSTS), `X-Frame-Options` (Clickjacking), `X-Content-Type-Options` (MIME sniffing), `Referrer-Policy`, dan `Permissions-Policy`.
-  * Mendeteksi kebocoran informasi server (`Server`, `X-Powered-By`, `X-AspNet-Version`).
-  * Menganalisis *Permissive CORS* (`Access-Control-Allow-Origin: *`).
-  * Memeriksa kelengkapan atribut keamanan cookie (`HttpOnly`, `Secure`, `SameSite`).
+  * Audits essential defensive headers: `Content-Security-Policy` (CSP), `Strict-Transport-Security` (HSTS), `X-Frame-Options` (Clickjacking), `X-Content-Type-Options` (MIME sniffing), `Referrer-Policy`, and `Permissions-Policy`.
+  * Detects server information leakage (`Server`, `X-Powered-By`, `X-AspNet-Version`).
+  * Identifies overly permissive CORS configurations (`Access-Control-Allow-Origin: *`).
+  * Checks cookie security flags (`HttpOnly`, `Secure`, `SameSite`).
 * **Sensitive Files & Directory Exposure Prober**:
-  * Memindai file konfigurasi dan dotfile kritis yang tidak sengaja terekspos ke publik: `.env`, `.git/HEAD`, `.aws/credentials`, `phpinfo.php`, `server-status`, `robots.txt`, `.gitignore`, dan dokumentasi API `swagger.json` / OpenAPI.
+  * Probes for critical exposed configuration files and dotfiles: `.env`, `.git/HEAD`, `.aws/credentials`, `phpinfo.php`, `server-status`, `robots.txt`, `.gitignore`, and API specifications (`swagger.json` / OpenAPI).
 * **Open URL Redirection Scanner**:
-  * Menguji parameter pengalihan URL yang rentan (`url`, `redirect`, `next`, `return_to`, `dest`, dll.) terhadap manipulasi domain eksternal berbahaya.
+  * Tests common redirection parameters (`url`, `redirect`, `next`, `return_to`, `dest`, etc.) against arbitrary external domain redirection attacks.
 * **SSL/TLS & Cryptographic Inspector**:
-  * Mengaudit komunikasi unencrypted HTTP vs HTTPS.
-  * Memvalidasi tanggal kedaluwarsa sertifikat SSL, sisa hari aktif (*expiry warning*), penerbit sertifikat (*Issuer/CA*), subjek domain, protokol, cipher suite, dan mendeteksi sertifikat *self-signed* atau tidak valid.
+  * Audits cleartext HTTP vs. encrypted HTTPS communication.
+  * Inspects SSL certificate validity, expiration dates, remaining active days (*expiry warnings*), Certificate Authority (*Issuer*), domain subjects, protocol versions, cipher suites, and flags invalid or *self-signed* certificates.
 * **Technology Stack Fingerprinting**:
-  * Mengidentifikasi server web (Nginx, Apache, IIS, Caddy, LiteSpeed), CDN/Cloud (Cloudflare, Vercel, Netlify), backend framework (FastAPI, Flask, Django, Laravel, Express, ASP.NET), CMS (WordPress), dan pustaka frontend (React, Vue.js, Angular, jQuery, Bootstrap, Tailwind CSS).
+  * Accurately fingerprints web servers (Nginx, Apache, IIS, Caddy, LiteSpeed), CDN/Cloud providers (Cloudflare, Vercel, Netlify), backend frameworks (FastAPI, Flask, Django, Laravel, Express, ASP.NET), CMS (WordPress), and frontend libraries (React, Vue.js, Angular, jQuery, Bootstrap, Tailwind CSS).
 
 ---
 
 ### 2. Asynchronous Web Crawler & Form Extractor
-* Mesin *crawler* asinkron cerdas yang memetakan struktur internal situs web, tautan navigasi, dan seluruh formulir HTML beserta atribut inputnya untuk pengujian keamanan otomatis yang mendalam.
+* An intelligent asynchronous crawler that maps internal website architectures, navigational hyperlinks, and extracts all HTML forms along with input parameters for in-depth automated security testing.
 
 ---
 
-### 3. Modern Cyber Dashboard & Real-Time Telemetry
-* **Cyber Glassmorphism Dark UI**: Desain antarmuka futuristik bertema gelap dengan aksen terarah, navigasi sidebar responsif, dan tipografi modern (*Inter* & *JetBrains Mono*).
-* **Real-Time WebSocket Stream**: Menampilkan log eksekusi langsung (*live terminal*) dengan kode warna dan progress bar persentase pemindaian.
-* **Visualisasi Data Interaktif**: Grafik distribusi kategori kerentanan (*horizontal bar chart*) dan sebaran tingkat keparahan (*severity donut chart*) berbasis Chart.js.
-* **Sistem Penilaian Risiko Cerdas**: Menghitung skor risiko (*Risk Score 0-100*) serta memberikan peringkat keamanan (*Security Grade A+, A, B, C, D, F*).
-* **Interactive Vulnerability Table & Right Detail Drawer**: Tabel temuan yang dapat difilter berdasarkan keparahan (*Critical, High, Medium, Low, Info*), dilengkapi drawer samping (*Inspector*) untuk melihat detail CWE, kategori OWASP, dampak risiko, solusi remediasi, referensi eksternal, dan bukti temuan (*Proof of Concept / evidence snippet*).
+### 3. Cyber Glassmorphism Dashboard & Real-Time Telemetry
+* **Futuristic Dark UI**: Modern cyber-styled user interface with glowing accents, responsive sidebar navigation, and refined typography (*Inter* & *JetBrains Mono*).
+* **Real-Time WebSocket Streaming**: Displays live execution logs (*live interactive terminal*) with color-coded severity levels and a dynamic progress bar.
+* **Interactive Data Visualization**: Visual vulnerability distribution (*horizontal bar charts*) and severity breakdowns (*donut charts*) powered by Chart.js.
+* **Smart Risk Scoring Model**: Computes an aggregate risk score (*0–100*) and awards an overall security rating (*Security Grade A+, A, B, C, D, F*).
+* **Vulnerability Table & Inspection Drawer**: Interactive findings table with severity filters (*Critical, High, Medium, Low, Info*), paired with a slide-out detail drawer showcasing CWE mappings, OWASP categories, risk impact, remediation guidelines, external references, and Proof of Concept (PoC) evidence snippets.
 
 ---
 
-### 4. Sistem Pengaturan & Kustomisasi Lengkap (Settings)
-* **Dukungan Multi-Bahasa (i18n)**: Beralih instan antara **Bahasa Indonesia (ID)** dan **English (EN)**.
-* **Pilihan Tema Warna Aksen (Accent Color)**: 5 palet warna dinamis (**Amber**, **Cyan**, **Emerald**, **Purple**, **Rose**) yang mengubah warna grafik, tombol, dan sorotan UI secara real-time.
-* **Toggle Modul Pemindai Dinamis**: Aktifkan atau nonaktifkan modul pemindai secara granular (SQLi, XSS, Headers, Sensitive Files, SSL, Redirect, Tech Stack).
-* **Mode Ringkas (Compact Mode)**: Mengoptimalkan tata letak dasbor agar lebih padat pada layar kecil.
-* **Pengaturan Ekspor Laporan**: Tentukan awalan nama file laporan kustom (*prefix*), sertakan/kecualikan temuan kategori *INFO*, dan aktifkan fitur *auto-export*.
-* **Penyimpanan Lokal (LocalStorage)**: Seluruh preferensi pengaturan tersimpan otomatis di browser dan dapat di-*reset* kapan saja.
+### 4. Settings & Customization
+* **Multi-Language Support (i18n)**: Instant switching between **English (EN)** and **Bahasa Indonesia (ID)**.
+* **Accent Color Palettes**: 5 vibrant theme options (**Amber**, **Cyan**, **Emerald**, **Purple**, **Rose**) that dynamically restyle charts, buttons, and UI highlights.
+* **Granular Module Toggles**: Independently enable or disable scanner modules (SQLi, XSS, Headers, Sensitive Files, SSL, Redirect, Tech Stack) prior to scanning.
+* **Compact Mode**: Optimizes dashboard layout and padding for smaller displays and laptops.
+* **Report Export Preferences**: Set custom report file prefixes, toggle inclusion of *INFO*-level findings, and enable automated report generation.
+* **LocalStorage Persistence**: All user preferences and configurations are saved locally in the browser.
 
 ---
 
-### 5. Laporan Audit Eksekutif (PDF & Standalone HTML)
-* **Executive PDF Report**: Dihasilkan menggunakan library ReportLab dengan layout profesional, ringkasan eksekutif, tabel metrik risiko, dan panduan mitigasi per kerentanan.
-* **Standalone HTML Report**: Laporan mandiri dengan visual gelap modern yang dapat dibuka di browser mana pun tanpa ketergantungan server lokal.
+### 5. Executive Audit Reports (PDF & Standalone HTML)
+* **Executive PDF Report**: Rendered using ReportLab with professional layouts, executive summaries, risk metric tables, and remediation roadmaps.
+* **Standalone HTML Report**: Self-contained report with modern dark styling, viewable in any browser with zero server dependencies.
 
 ---
 
 ### 6. Rich Terminal CLI
-* Mendukung eksekusi mandiri langsung dari terminal menggunakan library `rich` dengan ASCII banner, progress spinner, tabel ringkasan terstruktur, dan opsi ekspor instan.
+* Supports standalone terminal execution powered by the `rich` library with ASCII banners, live spinners, structured tables, and direct PDF/HTML export options.
 
 ---
 
-## Arsitektur Sistem
+## System Architecture
 
 ```mermaid
 flowchart TD
-    User([User / Security Auditor]) -->|Browser / HTTP| UI[Cyber Glassmorphism Dashboard]
-    User -->|Terminal / Console| CLI[Rich CLI Engine]
+    User(["User / Security Auditor"]) -->|"Browser / HTTP"| UI["Cyber Glassmorphism Dashboard"]
+    User -->|"Terminal / Console"| CLI["Rich CLI Engine"]
     
-    UI -->|REST API / WebSockets| Server[FastAPI Backend Server]
-    CLI -->|Direct Async Calls| Core[Scan Orchestrator Core]
+    UI -->|"REST API / WebSockets"| Server["FastAPI Backend Server"]
+    CLI -->|"Direct Async Calls"| Core["Scan Orchestrator Core"]
     Server --> Core
     
-    subgraph Core Engine Modules
-        Crawler[Async Web Crawler & Form Extractor]
-        SQLi[SQL Injection Module]
-        XSS[Cross-Site Scripting Module]
-        Headers[Security Headers & Cookie Auditor]
-        SensFiles[Sensitive File Exposure Prober]
-        SSLMod[SSL/TLS & HTTPS Inspector]
-        TechStack[Technology Fingerprinting]
+    subgraph CoreModules ["Core Engine Modules"]
+        Crawler["Async Web Crawler & Form Extractor"]
+        SQLi["SQL Injection Module"]
+        XSS["Cross-Site Scripting Module"]
+        Headers["Security Headers & Cookie Auditor"]
+        SensFiles["Sensitive File Exposure Prober"]
+        SSLMod["SSL/TLS & HTTPS Inspector"]
+        TechStack["Technology Fingerprinting"]
     end
     
     Core --> Crawler
@@ -114,16 +119,16 @@ flowchart TD
     Core --> SSLMod
     Core --> TechStack
     
-    Core --> Reporter[Executive Reporter Engine]
-    Reporter --> PDF[(Executive PDF Report)]
-    Reporter --> HTML[(Standalone HTML Report)]
+    Core --> Reporter["Executive Reporter Engine"]
+    Reporter --> PDF[("Executive PDF Report")]
+    Reporter --> HTML[("Standalone HTML Report")]
 ```
 
 ---
 
-## Pemetaan Standar OWASP Top 10 (2021) & CWE
+## OWASP Top 10 (2021) & CWE Mapping
 
-| Kategori OWASP | Nama Kategori OWASP | Modul INSPIRE | Contoh CWE Terkait |
+| OWASP Category | OWASP Category Name | INSPIRE Engine Module | Relevant CWE Examples |
 | :--- | :--- | :--- | :--- |
 | **A01:2021** | Broken Access Control | Open Redirect Scanner, Permissive CORS Auditor | CWE-601, CWE-346 |
 | **A02:2021** | Cryptographic Failures | SSL/TLS Inspector, Missing HSTS, Cleartext HTTP Transmission | CWE-319, CWE-295 |
@@ -132,14 +137,14 @@ flowchart TD
 
 ---
 
-## Panduan Instalasi & Penggunaan
+## Installation & Quick Start
 
-### Prasyarat
-* **Python 3.10** atau versi yang lebih baru terpasang di sistem operasi Anda (Windows / Linux / macOS).
+### Prerequisites
+* **Python 3.10** or higher installed on your system (Windows / Linux / macOS).
 
 ---
 
-### 1. Clone Repository & Masuk ke Folder Proyek
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/radityaarinanta/inspire-vulscan.git
 cd inspire-vulscan
@@ -147,129 +152,139 @@ cd inspire-vulscan
 
 ---
 
-### 2. Buat Virtual Environment (Direkomendasikan) & Install Dependensi
+### 2. Create a Virtual Environment & Install Dependencies
 ```bash
-# Membuat virtual environment
+# Create virtual environment
 python -m venv venv
 
-# Mengaktifkan virtual environment
-# Pada Windows (PowerShell):
+# Activate virtual environment
+# On Windows (PowerShell):
 .\venv\Scripts\Activate.ps1
-# Pada Windows (CMD):
+# On Windows (CMD):
 .\venv\Scripts\activate.bat
-# Pada Linux / macOS:
+# On Linux / macOS:
 source venv/bin/activate
 
-# Install dependensi
+# Install dependencies
 pip install -r requirements.txt
 ```
 
 ---
 
-### 3. Menjalankan Web Dashboard (1-Click Launcher)
-Jalankan perintah berikut:
+### 3. Launch Web Dashboard (1-Click Launcher)
+Run the launcher script:
 ```bash
 python run.py
 ```
-> **Catatan:** Script `run.py` akan secara otomatis memulai backend server FastAPI pada `http://127.0.0.1:8000` dan membuka dashboard di browser default Anda.
+> **Note:** The `run.py` script automatically initializes the FastAPI backend server on `http://127.0.0.1:8000` and opens the dashboard in your default browser.
 > 
-> Anda juga dapat menjalankannya langsung melalui:
+> You can also start the server directly via:
 > ```bash
 > uvicorn app:app --reload --host 127.0.0.1 --port 8000
 > ```
 
 ---
 
-### 4. Menjalankan via Command Line Interface (CLI)
-Anda dapat melakukan pemindaian cepat langsung dari terminal:
+### 4. Run via Command Line Interface (CLI)
+You can perform fast terminal-based security audits directly:
 
 ```bash
-# 1. Pemindaian standar dengan target URL
+# 1. Standard scan against target URL
 python cli.py http://testphp.vulnweb.com
 
-# 2. Pemindaian cepat (Quick profile) + Ekspor PDF otomatis
+# 2. Quick scan + automatic PDF report export
 python cli.py https://httpbin.org -p quick --pdf
 
-# 3. Pemindaian mendalam (Deep profile) + Ekspor PDF & HTML sekaligus
+# 3. Deep scan + export both PDF and HTML reports simultaneously
 python cli.py http://testphp.vulnweb.com -p deep --pdf --html
 ```
 
-#### Argumen CLI:
-* `url`: URL target yang akan dipindai (contoh: `http://testphp.vulnweb.com`).
-* `-p, --profile`: Pilihan profil pemindaian (`quick`, `standard`, `deep`).
-* `--pdf`: Otomatis membuat laporan eksekutif berformat PDF di folder `reports/`.
-* `--html`: Otomatis membuat laporan audit berformat HTML mandiri di folder `reports/`.
+#### CLI Options & Flags:
+* `url`: Target web application URL (e.g. `http://testphp.vulnweb.com`).
+* `-p, --profile`: Scan profile selection (`quick`, `standard`, `deep`).
+* `--pdf`: Automatically generates an Executive PDF Report in the `reports/` directory.
+* `--html`: Automatically generates a Standalone HTML Report in the `reports/` directory.
 
 ---
 
-## Pilihan Profil Pemindaian (Scan Profiles)
+## Scan Profiles
 
-| Profil | Deskripsi & Cakupan Modul | Rekomendasi Penggunaan |
+| Profile | Description & Scope | Recommended Use Case |
 | :--- | :--- | :--- |
-| **Quick** | Memindai Security Headers, SSL/TLS, Technology Stack, dan File Sensitif Dasar tanpa menjalankan web crawler. | *Reconnaissance* cepat & audit konfigurasi server awal. |
-| **Standard** *(Default)* | Mencakup semua fitur *Quick* + Web Crawler (kedalaman 2 level, maks 15 halaman), pengujian injeksi SQLi, XSS, dan Open Redirect pada seluruh form & parameter. | Evaluasi keamanan menyeluruh standar aplikasi web. |
-| **Deep** | Mencakup seluruh modul dengan analisis mendalam, pemetaan crawling penuh, dan verifikasi payload yang komprehensif. | *Penetration testing* mendalam pada aplikasi kompleks. |
+| **Quick** | Audits Security Headers, SSL/TLS, Technology Stack, and Basic Sensitive Files without launching the crawler. | Rapid reconnaissance & initial server configuration audit. |
+| **Standard** *(Default)* | Includes all *Quick* modules + Web Crawler (depth 2, max 15 pages), SQLi, XSS, and Open Redirect injections across forms & parameters. | Comprehensive security evaluation for standard web apps. |
+| **Deep** | Comprehensive scan with full crawling, extended endpoint mapping, and thorough payload verification. | In-depth penetration testing on complex web applications. |
 
 ---
 
-## Struktur Direktori Proyek
+## Project Structure
 
 ```
 Web Vulnerability Scanner/
 ├── app.py                      # FastAPI Backend Server & WebSocket endpoint
-├── run.py                      # 1-Click Launcher (Auto-start server + buka browser)
-├── cli.py                      # Standalone CLI tool dengan Rich formatting
-├── requirements.txt            # Dependensi Python
-├── LICENSE                     # Lisensi open-source MIT
-├── README.md                   # Dokumentasi proyek lengkap
+├── run.py                      # 1-Click Launcher (Auto-start server + open browser)
+├── cli.py                      # Standalone CLI scanner with Rich formatting
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # MIT Open Source License
+├── README.md                   # Project documentation
 ├── core/
 │   ├── __init__.py
 │   ├── engine.py               # Asynchronous Multi-threaded Scan Orchestrator
 │   ├── models.py               # Pydantic Schemas (Vulnerability, Severity, Results, Config)
 │   ├── reporter.py             # PDF (ReportLab) & HTML report generation engine
-│   └── modules/                # Modul Deteksi Kerentanan Spesifik
+│   └── modules/                # Specialized Security Detection Modules
 │       ├── __init__.py
 │       ├── crawler.py          # Asynchronous Web Crawler & Form Extractor
 │       ├── headers.py          # Security Headers, HSTS, CSP, CORS, & Cookie Flags
 │       ├── sqli.py             # SQL Injection heuristics & multi-DBMS error matching
-│       ├── xss.py              # Reflected XSS detection dengan safe canary payloads
+│       ├── xss.py              # Reflected XSS detection with safe canary payloads
 │       ├── sensitive_files.py  # .env, .git, AWS keys, phpinfo, & admin endpoint prober
 │       ├── open_redirect.py    # Unvalidated external URL redirection scanner
 │       ├── ssl_tls.py          # SSL certificate verification, expiry, & HTTPS checks
 │       └── tech_stack.py       # Web Server, Framework, CMS & Frontend Fingerprinting
 ├── templates/
 │   ├── index.html              # Cyber Glassmorphism Web Dashboard (SPA Multi-view)
-│   └── report_template.html    # Template laporan HTML audit mandiri
+│   └── report_template.html    # Standalone HTML audit report template
 ├── static/
 │   ├── css/
-│   │   └── style.css           # Desain CSS Cyber Dark Theme & Multi-Accent System
+│   │   └── style.css           # Cyber Dark Theme CSS & Multi-Accent System
 │   └── js/
-│       └── app.js              # Controller Frontend, WebSocket stream, Chart.js, & i18n
-└── reports/                    # Direktori output laporan hasil pemindaian (PDF/HTML)
+│       └── app.js              # Frontend Controller, WebSocket stream, Chart.js, & i18n
+└── reports/                    # Generated audit report directory (PDF/HTML)
 ```
 
 ---
 
-## Ringkasan Fitur Pengaturan (Settings Page)
+## Settings & Customization Overview
 
-Pada menu **Settings** di Web Dashboard, Anda dapat mengatur:
-1. **Bahasa Tampilan**: Bahasa Indonesia atau English.
-2. **Warna Aksen UI**: Pilihan warna tema (*Amber, Cyan, Emerald, Purple, Rose*).
-3. **Batas Baris Log Terminal**: Menentukan jumlah riwayat baris log eksekusi (default: 100 baris).
-4. **Mode Tampilan Ringkas (Compact Mode)**: Mengurangi padding antarmuka untuk layout lebih padat.
-5. **Konfigurasi Modul Pemindai**: Mengaktifkan/menonaktifkan modul deteksi tertentu sebelum pemindaian.
-6. **Preferensi Laporan**: Menentukan format ekspor default, awalan nama file kustom, opsi menampilkan temuan berlevel *INFO*, dan *Auto-Export*.
+Through the **Settings** view in the Web Dashboard, you can customize:
+1. **Display Language**: Toggle between English and Bahasa Indonesia.
+2. **UI Accent Themes**: Select your preferred accent color (*Amber, Cyan, Emerald, Purple, Rose*).
+3. **Terminal Log Limit**: Set the maximum number of live log lines to retain (default: 100).
+4. **Compact Mode**: Reduce interface padding for dense, information-rich view on smaller screens.
+5. **Scanner Module Selection**: Granularly enable or disable specific scan modules prior to execution.
+6. **Report Export Preferences**: Configure default export formats, custom file prefixes, *INFO*-level inclusion, and automated exports.
 
 ---
 
-## Pernyataan Etika & Legal Disclaimer
+## 🗺️ Roadmap & Planned Capabilities
+
+- [ ] **Authenticated Scanning**: Session cookie injection, HTTP Basic/Bearer Auth, and login sequence replay.
+- [ ] **Server-Side Request Forgery (SSRF)**: Out-of-band callback listeners and DNS token resolution probe engine.
+- [ ] **DOM-based XSS & Single Page Apps (SPA)**: Headless browser integration for dynamic JavaScript execution and DOM sink analysis.
+- [ ] **Extended Export Formats**: Standardized JSON, SARIF (*Static Analysis Results Interchange Format*), and CSV reporting.
+- [ ] **CI/CD Security Gate**: GitHub Actions and GitLab CI pipeline integrations with threshold-based build breaking.
+
+---
+
+## Ethics & Legal Disclaimer
 
 > [!CAUTION]
-> **Hanya untuk Tujuan Edukasi dan Audit yang Sah (Authorized Security Evaluation):**
-> INSPIRE Security Suite dirancang khusus untuk keperluan edukasi, riset keamanan informasi, dan pengujian penetrasi pada sistem yang dimiliki secara pribadi atau telah memiliki izin tertulis (*mutual written consent*). Memindai atau mengeksploitasi target tanpa izin eksplisit dari pemilik sistem adalah tindakan ilegal dan melanggar hukum. Pembuat tidak bertanggung jawab atas segala bentuk penyalahgunaan atau kerusakan yang diakibatkan oleh penggunaan perangkat lunak ini.
+> **For Educational & Authorized Security Auditing Purposes Only:**
+> INSPIRE Security Suite is developed strictly for educational purposes, security research, and authorized vulnerability assessments on systems owned by you or for which you have received explicit, written permission (*mutual written consent*). Scanning or probing targets without prior authorization is illegal and punishable by law. The author assumes no liability and is not responsible for any misuse, unauthorized testing, or damage caused by this software.
 
 ---
 
-## Lisensi
+## License
 
-Proyek ini dilisensikan di bawah **[MIT License](LICENSE)**. Anda bebas menggunakan, memodifikasi, dan mendistribusikan program ini sesuai ketentuan lisensi.
+This project is licensed under the **[MIT License](LICENSE)**. You are free to use, modify, and distribute this software in accordance with the license terms.
