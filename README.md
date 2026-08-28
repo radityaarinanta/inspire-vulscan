@@ -309,6 +309,15 @@ Through the **Settings** view in the Web Dashboard, you can customize:
 
 ---
 
+## Community & Security Governance
+
+* **Security Policy**: Read our responsible disclosure guidelines in [SECURITY.md](SECURITY.md).
+* **Contributing Guide**: Interested in expanding INSPIRE? Check out [CONTRIBUTING.md](CONTRIBUTING.md).
+* **Code of Conduct**: Our pledge to a healthy community is detailed in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+* **Changelog**: View full release history and version tracking in [CHANGELOG.md](CHANGELOG.md).
+
+---
+
 ## License
 
 This project is licensed under the **[MIT License](LICENSE)**. You are free to use, modify, and distribute this software in accordance with the license terms.
