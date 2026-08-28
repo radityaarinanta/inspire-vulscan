@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/OWASP-Top%2010%20Aligned-00F0FF?style=for-the-badge&logo=owasp&logoColor=white" alt="OWASP Top 10" />
   <img src="https://img.shields.io/badge/AsyncIO-High%20Performance-10B981?style=for-the-badge&logo=speedtest&logoColor=white" alt="AsyncIO" />
   <img src="https://img.shields.io/badge/UI-Cyber%20Glassmorphism-f59e0b?style=for-the-badge" alt="UI Theme" />
-  <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge&logo=apache" alt="License" />
 </p>
 
 ```text
@@ -322,4 +322,4 @@ Through the **Settings** view in the Web Dashboard, you can customize:
 
 ## License
 
-This project is licensed under the **[MIT License](LICENSE)**. You are free to use, modify, and distribute this software in accordance with the license terms.
+This project is licensed under the **[Apache License 2.0](LICENSE)**. You are free to use, modify, and distribute this software in accordance with the license terms.
