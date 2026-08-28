@@ -33,7 +33,7 @@ You can contribute to INSPIRE in several ways:
 
 1. **Fork and Clone the Repository**:
    ```bash
-   git clone https://github.com/<your-username>/inspire-vulscan.git
+   git clone https://github.com/radityaarinanta/inspire-vulscan.git
    cd inspire-vulscan
    ```
 
