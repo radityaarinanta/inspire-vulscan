@@ -4,12 +4,14 @@
 ### Enterprise Web Vulnerability & Threat Assessment Suite
 
 <p align="center">
+  <a href="https://github.com/radityaarinanta/inspire-vulscan/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/radityaarinanta/inspire-vulscan/ci.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=CI%20Pipeline" alt="CI Pipeline Status" />
+  </a>
   <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
   <img src="https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/OWASP-Top%2010%20Aligned-00F0FF?style=for-the-badge&logo=owasp&logoColor=white" alt="OWASP Top 10" />
   <img src="https://img.shields.io/badge/AsyncIO-High%20Performance-10B981?style=for-the-badge&logo=speedtest&logoColor=white" alt="AsyncIO" />
   <img src="https://img.shields.io/badge/UI-Cyber%20Glassmorphism-f59e0b?style=for-the-badge" alt="UI Theme" />
-  <img src="https://img.shields.io/badge/Status-Active%20Development-orange?style=for-the-badge&logo=git" alt="Status" />
   <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" alt="License" />
 </p>
 
