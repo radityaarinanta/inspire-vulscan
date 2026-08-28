@@ -31,10 +31,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Verify CLI Vulnerability Scanner & Report Formats
+      - name: Run Core Test Suite & Report Generation
         run: |
-          python cli.py https://httpbin.org -p quick --all-reports
-
-      - name: Verify Web Malware Scanner Mode
-        run: |
-          python cli.py https://httpbin.org -m malware --all-reports
+          python tests/test_suite.py
